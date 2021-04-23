@@ -1,16 +1,13 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Apr 22 20:58:29 2021
 
-@author: Laimonis
-"""
 import tkinter as tk
 from tkinter import ttk
 from math import *
 import time as tm
 
-from PIL import Image, ImageTk, ImageDraw 
 from datetime import *
+from tkcalendar import Calendar
+from PIL import Image, ImageTk, ImageDraw 
+
 
 
 
@@ -35,7 +32,7 @@ class AmazingButler(tk.Tk):
         
         self.show_frame(StartPage)
         self.title("Amazing Butler App")
-        self.geometry("700x400")
+        self.geometry("700x500")
     def show_frame(self, cont):
         
         frame = self.frames[cont]
@@ -51,7 +48,7 @@ class StartPage(tk.Frame):
         self.lbl.place(x=10, y=10, height=200, width=200)
         
         self.working()
-        
+        self.calendar()
         
     def clock_image(self, hr, min_, sec_):
         clock=Image.new("RGB",(400, 400), (255, 255, 255))
@@ -91,6 +88,15 @@ class StartPage(tk.Frame):
         self.img = ImageTk.PhotoImage(file="clock_new.png")
         self.lbl.config(image=self.img)
         self.lbl.after(200, self.working)
+        
+    def calendar(self):
+        f1 = tk.Frame(self, width = 250, height = 250)
+        f1.place(x=10, y=230)
+        
+        cal = Calendar(f1, selectmode = "day", 
+                       background = "darkblue", foreground = "white")
+        
+        cal.place(width = 250, height = 250)
         
         
         
