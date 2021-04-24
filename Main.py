@@ -7,7 +7,8 @@ import time as tm
 from datetime import *
 from tkcalendar import Calendar
 from PIL import Image, ImageTk, ImageDraw 
-
+import requests, base64
+from WeatherFile import OpenWeatherMap, OWIconLabel
 
 
 
@@ -25,7 +26,7 @@ class AmazingButler(tk.Tk):
         self.frames = {}
         
         frame = StartPage(container, self)
-        
+        frame.configure(bg='white')
         self.frames[StartPage] = frame
         
         frame.grid(row=0, column=0, sticky="nsew")
@@ -49,6 +50,7 @@ class StartPage(tk.Frame):
         
         self.working()
         self.calendar()
+        self.weather()
         
     def clock_image(self, hr, min_, sec_):
         clock=Image.new("RGB",(400, 400), (255, 255, 255))
@@ -97,6 +99,34 @@ class StartPage(tk.Frame):
                        background = "darkblue", foreground = "white")
         
         cal.place(width = 250, height = 250)
+        
+    def weather(self):
+        
+        owm = OpenWeatherMap()
+        owm.get_city('Vantaa')
+        
+        temperature = owm.get_main('temp')
+        temp_icon = OWIconLabel(self, weather_icon=owm.get_icon_data(), bg="white")
+        temp_icon.place(x=350, y=25)
+        
+        location = owm.get('name')
+        country = owm.get_sys("country")
+        
+        self.location_lbl = tk.Label(text="{}, {}".format(location, country), font=("Bold", 15), bg="white")
+        self.location_lbl.place(x=360, y=10)
+
+        
+        self.temp = tk.Label(self,
+                             text='{:.1f} °C'.format(temperature),
+                             font=("Bold", 15), bg="white")
+        self.temp.place(x=410, y=40)
+
+        temp_feel = owm.get_main('feels_like')
+        
+        desc = owm.get_weather('description')
+        
+        self.fell_lbl = tk.Label(text="Feels like: {:.1f} °C. {}".format(temp_feel, desc.capitalize()), font=("Bold", 13), bg="white")
+        self.fell_lbl.place(x=360, y=70)
         
         
         
