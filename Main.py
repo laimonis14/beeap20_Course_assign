@@ -3,13 +3,14 @@ import tkinter as tk
 from tkinter import ttk
 from math import *
 import time as tm
+import sqlite3
 
 from datetime import *
 from tkcalendar import Calendar
 from PIL import Image, ImageTk, ImageDraw 
 import requests, base64
 from WeatherFile import OpenWeatherMap, OWIconLabel
-
+from registration_file import registers
 
 
 class AmazingButler(tk.Tk):
@@ -90,7 +91,8 @@ class StartPage(tk.Frame):
         h=datetime.now().time().hour
         m=datetime.now().time().minute
         s=datetime.now().time().second
-        
+                
+        # Formula to convert clock in circle values for analog clock        
         hr = (h/12)*360
         min_=(m/60)*360
         sec_=(s/60)*360
@@ -103,10 +105,11 @@ class StartPage(tk.Frame):
         
     def calendar(self):
         
-        
+        # Make a frame
         f1 = tk.Frame(self, width = 250, height = 250)
         f1.place(x=10, y=230)
         
+        #Place calendar inside frame
         cal = Calendar(f1, selectmode = "day", 
                        background = "darkblue", foreground = "white")
         
@@ -114,32 +117,39 @@ class StartPage(tk.Frame):
         
     def weather(self):
         
+        
         owm = OpenWeatherMap()
+        # Define city
         owm.get_city('Vantaa')
         
+        # gets temp value
         temperature = owm.get_main('temp')
+        # Find weather icon 
         temp_icon = OWIconLabel(self, 
                                 weather_icon=owm.get_icon_data(), bg="white")
         temp_icon.place(x=350, y=25)
         
+        # Gets location name
         location = owm.get('name')
+        #gets country name
         country = owm.get_sys("country")
-        
+        # Country and city label
         self.location_lbl = tk.Label(self, 
                                      text="{}, {}".format(location, country), 
                                      font=("Bold", 15), bg="white")
         self.location_lbl.place(x=360, y=10)
 
-        
+        # Temperature label
         self.temp = tk.Label(self,
                              text='{:.1f} °C'.format(temperature),
                              font=("Bold", 15), bg="white")
         self.temp.place(x=410, y=40)
-
+        
+        # Temperature \'feel like'\ value
         temp_feel = owm.get_main('feels_like')
-        
+        # Weather description
         desc = owm.get_weather('description')
-        
+        # Temperature \'feel like'\ and Weather description label
         self.fell_lbl = tk.Label(self, 
                                  text="Feels like: {:.1f} °C. {}".format(temp_feel, 
                                  desc.capitalize()), font=("Bold", 13), bg="white")
@@ -151,124 +161,77 @@ class StartPage(tk.Frame):
         
         global username_verify
         global password_verify
+        
         username_verify = tk.StringVar()
         password_verify = tk.StringVar()
-        
+        # Login button
         Login_button = tk.Button(self, 
                                  text='Login',command=self.login_verify, 
                                  height=3, width=13)
         Login_button.place(x=400, y=350)
-        
+        # Register button
         Register_button = tk.Button(self, text="Register",
                                     command = self.register, width=13, height=3)
         Register_button.place(x=540, y=350)
-        
+        # Username label
         self.user_lbl = tk.Label(self, text='Username', bg='white')
         self.user_lbl.place(x=350, y=250)
+        # Password label
         self.password_lbl = tk.Label(self, text='Password', bg='white')
         self.password_lbl.place(x=350, y=280)
         
         global box1
         global box2
-        box1 = tk.Entry(self, textvariable=username_verify) #username insert box
+        # Username insert box
+        box1 = tk.Entry(self, textvariable=username_verify) 
         box1.place(x=480, y=250)
-        
-        box2= tk.Entry(self, textvariable=password_verify) #password insert box
+        # Password insert box
+        box2= tk.Entry(self, textvariable=password_verify, show="*") 
         box2.place(x=480, y=280)
-        box2.config(show="*")
         
-        
+            
     def register(self):
         
-        global register_screen
-        register_screen = tk.Toplevel(self)
-        register_screen.title("Register")
-        register_screen.geometry("300x250")
         
-        global username
-        global password
-        global username_entry
-        global password_entry
+        registers.register(self)
         
-        username = tk.StringVar()
-        password = tk.StringVar()
-        
-        tk.Label(register_screen, text="Please enter details below").pack()
-        tk.Label(register_screen, text="").pack()
-        
-        username_lable = tk.Label(register_screen, text="Username * ")
-        username_lable.pack()
-        username_entry = tk.Entry(register_screen, textvariable=username)
-        username_entry.pack()
-        
-        password_lable = tk.Label(register_screen, text="Password * ")
-        password_lable.pack()
-        password_entry = tk.Entry(register_screen, textvariable=password, show='*')
-        password_entry.pack()
-        
-        tk.Label(register_screen, text="").pack()
-        tk.Button(register_screen, 
-                            text="Register", width=10, height=1, 
-                            command = self.register_user).pack()
-        
+                
     def register_user(self): 
         
         
-        username_info = username.get()
-        password_info = password.get()
-        
-        file = open("Data_file.csv", 'a')  #open file
-        file.write(username_info+','+password_info)  #write in file
-        
-        username_entry.delete(0, tk.END)    #deletes entry of username
-        password_entry.delete(0, tk.END)    # Same just for password
-        
-        tk.Label(register_screen, text="Registration Success", 
-                 fg="green", font=("calibri", 11)).pack()
-      
-        file.close
-     
-        
+        registers.submit(self)
+               
+          
     def login_verify(self):
         
-        
-        succes = False
-        username1 = username_verify.get()
-        password1 = password_verify.get()
+        # If Username entry box is empty shows message
+        if len(box1.get())==0:
+            tk.messagebox.showinfo("ERROR", "Username Not Defined")
+            # If Password entry box is empty shows message    
+        elif len(box2.get())==0:
+            tk.messagebox.showinfo("ERROR", "Password Not Defined")
+                
+        else:
+            username1 = username_verify.get()
+            password1 = password_verify.get()
+            
+            with sqlite3.connect("Users_data.db") as db:
+                cursor = db.cursor()
+            find_user = ('SELECT *, oid FROM users_data WHERE user_name = ? AND password = ?')
+            cursor.execute(find_user,[(username1),(password1)])
+            results = cursor.fetchall()
+            
+            if results:
+                for i in results:
+                    self.login_sucess()
+                    break
+            else:
+                tk.messagebox.showinfo("ERROR", "Wrong Username or Password")
         
         box1.delete(0, tk.END)
         box2.delete(0, tk.END) 
         
-        file = open('Data_file.csv', 'r')
-        
-        for i in file:
-            a,b = i.split(",")
-            b=b.strip()
-            
-            if (a==username1 and b==password1):
-                succes=True
-                break
-               
-        file.close()
-        
-        if(succes):
-            self.login_sucess()
-            
-        else:
-            self.password_not_recognised()
-        
-    def password_not_recognised(self):
-        
-        
-        global password_not_recog_screen
-        password_not_recog_screen = tk.Toplevel(self)
-        password_not_recog_screen.title("ERROR")
-        password_not_recog_screen.geometry("200x100")
-        tk.Label(password_not_recog_screen, 
-                 text="Wrong Username or Password ").pack()
-        tk.Button(password_not_recog_screen, text="OK", 
-                  command=password_not_recog_screen.destroy).pack()   
-        
+        db.close()        
         
     def login_sucess(self):
         
@@ -277,13 +240,12 @@ class StartPage(tk.Frame):
         login_success_screen.title("Success")
         login_success_screen.geometry("150x100")
         tk.Label(login_success_screen, text="Login Success").pack()
-        tk.Button(login_success_screen, text="OK", 
-                          command=login_success_screen.destroy).pack()    
+            
         
         #open new window after 1s
         login_success_screen.after(1000, lambda: self.controller.show_frame(PageOne))
         #closes pop up window after 2s
-        login_success_screen.after(2000, login_success_screen.destroy)
+        login_success_screen.after(1500, login_success_screen.destroy)
         if login_success_screen.showinfo('Success', 'Login Success'):
             lambda: self.controller.show_frame(PageOne)
             login_success_screen.destroy()
