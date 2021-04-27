@@ -4,7 +4,8 @@ from tkinter import ttk
 from math import *
 import time as tm
 import sqlite3
-
+import urllib
+import json
 from datetime import *
 from tkcalendar import Calendar
 from PIL import Image, ImageTk, ImageDraw 
@@ -23,6 +24,22 @@ class AmazingButler(tk.Tk):
         
         container.grid_rowconfigure(0, weight=1)
         container.grid_columnconfigure(0, weight=1)
+        
+        menubar = tk.Menu(container)
+        filemenu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label='File', menu=filemenu)
+        Editmenu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label='Edit', menu=Editmenu)
+        Optionsmenu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label='Options', menu=Optionsmenu)
+        Toolsmenu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label='Tools', menu=Toolsmenu)
+        Windowmenu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label='Window', menu=Windowmenu)
+        helpmenu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label='Help', menu=helpmenu)
+        
+        tk.Tk.config(self, menu=menubar)
         
         self.frames = {}
         
