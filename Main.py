@@ -75,6 +75,8 @@ class StartPage(tk.Frame):
         self.calendar()
         self.weather()
         self.Login()
+        self.button()
+    
         
     def clock_image(self, hr, min_, sec_):
         clock=Image.new("RGB",(400, 400), (255, 255, 255))
@@ -267,9 +269,31 @@ class StartPage(tk.Frame):
             lambda: self.controller.show_frame(PageOne)
             login_success_screen.destroy()
             
+    def button(self):
+        
+        logout = tk.Button(self, text="Logout", fg='white', bd = '5', bg = 'blue')
+        logout.place(x=800, y=100, height=60, width=200)
+
+        addtrans = tk.Button(self, text="Add transaction", fg='white', bd = '5', bg = 'blue' )
+        addtrans.place(x=800, y=200, height=60, width=200)
+        
+        editaccount = tk.Button(self, text="Edit account", fg='white', bd = '5', bg = 'blue' )
+        editaccount.place(x=800, y=300, height=60, width=200)
+        
+        setup = tk.Button(self, text="Setup", fg='white', bd = '5', bg = 'blue' )
+        setup.place(x=800, y=400, height=60, width=200)
+        
+        Accountsum = tk.Button(self, text="Account summary", fg='white', bd = '5', bg = 'blue' )
+        Accountsum.place(x=800, y=500, height=60, width=200)
+        
+        playlotto = tk.Button(self, text="Play lotto", fg='white', bd = '5', bg = 'blue' )
+        playlotto.place(x=800, y=600, height=60, width=200)
+        
 class PageOne(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
+      
+        
         
         
         
