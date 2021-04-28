@@ -1,6 +1,7 @@
 
 import tkinter as tk
 from tkinter import ttk
+from tkinter import messagebox
 from math import *
 import time as tm
 import sqlite3
@@ -28,8 +29,15 @@ class AmazingButler(tk.Tk):
         menubar = tk.Menu(container)
         filemenu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label='File', menu=filemenu)
+        filemenu.add_command(label="New")
+        filemenu.add_command(label="Exit", command=lambda: self.controller.show_frame(StartPage))
+        
         Editmenu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label='Edit', menu=Editmenu)
+        Editmenu.add_command(label="Cut")
+        Editmenu.add_command(label="Copy")
+        Editmenu.add_command(label="Paste")
+        
         Optionsmenu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label='Options', menu=Optionsmenu)
         Toolsmenu = tk.Menu(menubar, tearoff=0)
@@ -40,6 +48,7 @@ class AmazingButler(tk.Tk):
         menubar.add_cascade(label='Help', menu=helpmenu)
         
         tk.Tk.config(self, menu=menubar)
+        
         
         self.frames = {}
         
@@ -274,32 +283,146 @@ class StartPage(tk.Frame):
 class PageOne(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
+        tk.Frame.__init__(self, parent)
+        self.controller = controller
+        self.lbl = tk.Label(self, bg="white")
+        self.lbl.place(x=10, y=10, height=200, width=200)
         
+        self.working()
+        self.calendar()
+        self.weather() 
         self.button()
+        controller=self.controller
+        
+        
       
     def button(self):
         
+        self.grid_rowconfigure(0, weight=1, minsize=30)
+        self.grid_columnconfigure(0, weight=1, minsize=30)
+        
+        
         logout = tk.Button(self, text="Logout", fg='white', bd = '5', bg = 'blue',
-                           command=self.destroy)
-        logout.pack()
-        logout.place(x=800, y=100, height=60, width=200)
+                           command=lambda: self.controller.show_frame(StartPage))
+        logout.config(height = 3, width = 15)
+        logout.grid(row=1, column=4, padx=5, pady=5, sticky = 'nw')
         
         addtrans = tk.Button(self, text="Add transaction", fg='white', bd = '5', bg = 'blue' )
-        addtrans.place(x=800, y=200, height=60, width=200)
+        addtrans.config(height = 3, width = 15)
+        addtrans.grid(row=2, column=4, padx=5, pady=5, sticky = 'nw')
         
         editaccount = tk.Button(self, text="Edit account", fg='white', bd = '5', bg = 'blue' )
-        editaccount.place(x=800, y=300, height=60, width=200)
+        editaccount.config(height = 3, width = 15)
+        editaccount.grid(row=3, column=4, padx=5, pady=5, sticky = 'sw')
         
         setup = tk.Button(self, text="Setup", fg='white', bd = '5', bg = 'blue' )
-        setup.place(x=800, y=400, height=60, width=200)
+        setup.config(height = 3, width = 15)
+        setup.grid(row=4, column=4, padx=5, pady=5, sticky = 'sw')
         
-        Accountsum = tk.Button(self, text="Account summary", fg='white', bd = '5', bg = 'blue' )
-        Accountsum.place(x=800, y=500, height=60, width=200)
+        Accountsum = tk.Button(self, text="Setup", fg='white', bd = '5', bg = 'blue' )
+        Accountsum.config(height = 3, width = 15)
+        Accountsum.grid(row=5, column=4, padx=5, pady=5, sticky = 'sw')
         
         playlotto = tk.Button(self, text="Play lotto", fg='white', bd = '5', bg = 'blue' )
-        playlotto.place(x=800, y=600, height=60, width=200)
+        playlotto.config(height = 3, width = 15)
+        playlotto.grid(row=6, column=4, padx=5, pady=5, sticky = 'sw')
+        
+
+    def clock_image(self, hr, min_, sec_):
+        clock=Image.new("RGB",(400, 400), (255, 255, 255))
+        draw = ImageDraw.Draw(clock)
+        # For clock image
+        bg = Image.open("clock4.png")
+        bg=bg.resize((200,200), Image.ANTIALIAS)
+        clock.paste(bg, (100, 100))
+        
+       
+        # Hour Line Image
+        origin = 200, 200
+        draw.line((origin, 200+50*sin(radians(hr)), 
+                   200-50*cos(radians(hr))), fill="black", width=4)
+        # Min Line Image
+        draw.line((origin, 200+80*sin(radians(min_)), 
+                   200-80*cos(radians(min_))), fill="black", width=4)
+        # Sec Line Image
+        draw.line((origin, 200+80*sin(radians(sec_)), 
+                   200-80*cos(radians(sec_))), fill="black", width=1)
+        
+        draw.ellipse((195, 195, 210, 210), fill="black")
         
         
+        clock.save("clock_new.png")
+        
+        
+    def working(self):
+        
+        
+        h=datetime.now().time().hour
+        m=datetime.now().time().minute
+        s=datetime.now().time().second
+                
+        # Formula to convert clock in circle values for analog clock        
+        hr = (h/12)*360
+        min_=(m/60)*360
+        sec_=(s/60)*360
+        
+        self.clock_image(hr,min_,sec_)
+        self.img = ImageTk.PhotoImage(file="clock_new.png")
+        self.lbl.config(image=self.img)
+        self.lbl.after(200, self.working)
+        
+        
+    def calendar(self):
+        
+        # Make a frame
+        f1 = tk.Frame(self, width = 250, height = 250)
+        f1.place(x=10, y=230)
+        
+        #Place calendar inside frame
+        cal = Calendar(f1, selectmode = "day", 
+                       background = "darkblue", foreground = "white")
+        
+        cal.place(width = 250, height = 250)
+        
+    def weather(self):
+        
+        
+        owm = OpenWeatherMap()
+        # Define city
+        owm.get_city('Vantaa')
+        
+        # gets temp value
+        temperature = owm.get_main('temp')
+        # Find weather icon 
+        temp_icon = OWIconLabel(self, 
+                                weather_icon=owm.get_icon_data(), bg="white")
+        temp_icon.place(x=350, y=25)
+        
+        # Gets location name
+        location = owm.get('name')
+        #gets country name
+        country = owm.get_sys("country")
+        # Country and city label
+        self.location_lbl = tk.Label(self, 
+                                     text="{}, {}".format(location, country), 
+                                     font=("Bold", 15), bg="white")
+        self.location_lbl.place(x=360, y=10)
+
+        # Temperature label
+        self.temp = tk.Label(self,
+                             text='{:.1f} °C'.format(temperature),
+                             font=("Bold", 15), bg="white")
+        self.temp.place(x=410, y=40)
+        
+        # Temperature \'feel like'\ value
+        temp_feel = owm.get_main('feels_like')
+        # Weather description
+        desc = owm.get_weather('description')
+        # Temperature \'feel like'\ and Weather description label
+        self.fell_lbl = tk.Label(self, 
+                                 text="Feels like: {:.1f} °C. {}".format(temp_feel, 
+                                 desc.capitalize()), font=("Bold", 13), bg="white")
+        self.fell_lbl.place(x=360, y=70)
         
         
 app = AmazingButler()
