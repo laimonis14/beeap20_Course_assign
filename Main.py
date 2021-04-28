@@ -4,8 +4,8 @@ from tkinter import ttk
 import math as mt
 import time as tm
 import sqlite3
-import urllib
-import json
+
+
 from datetime import *
 from tkcalendar import Calendar
 from PIL import Image, ImageTk, ImageDraw
@@ -24,11 +24,7 @@ class AmazingButler(tk.Tk):
 
         container.grid_rowconfigure(0, weight=1)
         container.grid_columnconfigure(0, weight=1)
-<<<<<<< HEAD
 
-=======
-        
->>>>>>> 5ba35a359df1cf0b6c760e53ebd5528aef1ddae7
         menubar = tk.Menu(container)
         filemenu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label='File', menu=filemenu)
@@ -42,15 +38,11 @@ class AmazingButler(tk.Tk):
         menubar.add_cascade(label='Window', menu=Windowmenu)
         helpmenu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label='Help', menu=helpmenu)
-<<<<<<< HEAD
+
 
         tk.Tk.config(self, menu=menubar)
 
-=======
-        
-        tk.Tk.config(self, menu=menubar)
-        
->>>>>>> 5ba35a359df1cf0b6c760e53ebd5528aef1ddae7
+
         self.frames = {}
 
         for F in (StartPage, PageOne):
@@ -84,13 +76,7 @@ class StartPage(tk.Frame):
         self.calendar()
         self.weather()
         self.Login()
-<<<<<<< HEAD
 
-=======
-        
-    
-        
->>>>>>> 5ba35a359df1cf0b6c760e53ebd5528aef1ddae7
     def clock_image(self, hr, min_, sec_):
         clock = Image.new("RGB", (400, 400), (255, 255, 255))
         draw = ImageDraw.Draw(clock)
@@ -271,74 +257,46 @@ class StartPage(tk.Frame):
         if login_success_screen.showinfo('Success', 'Login Success'):
             lambda: self.controller.show_frame(PageOne)
             login_success_screen.destroy()
-<<<<<<< HEAD
 
 
-=======
-            
-   
-        
->>>>>>> 5ba35a359df1cf0b6c760e53ebd5528aef1ddae7
 class PageOne(tk.Frame):
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
-<<<<<<< HEAD
+
         self.controller = controller
 
         StartPage.weather(self)
         StartPage.calendar(self)
+        self.button()
 
-        logout = tk.Button(self, text="Logout", fg='white',
-                           bd='5', bg='blue',
+    def button(self):
+
+        logout = tk.Button(self, text="Logout",
+                           fg='white', bd='5', bg='blue',
                            command=lambda: self.controller.show_frame(StartPage))
+        logout.pack()
         logout.place(x=800, y=100, height=60, width=200)
+
         addtrans = tk.Button(self, text="Add transaction",
                              fg='white', bd='5', bg='blue')
         addtrans.place(x=800, y=200, height=60, width=200)
+
         editaccount = tk.Button(self, text="Edit account",
                                 fg='white', bd='5', bg='blue')
         editaccount.place(x=800, y=300, height=60, width=200)
-        setup = tk.Button(self, text="Setup", fg='white',
-                          bd='5', bg='blue')
+
+        setup = tk.Button(self, text="Setup", fg='white', bd='5', bg='blue')
         setup.place(x=800, y=400, height=60, width=200)
+
         Accountsum = tk.Button(self, text="Account summary",
                                fg='white', bd='5', bg='blue')
         Accountsum.place(x=800, y=500, height=60, width=200)
+
         playlotto = tk.Button(self, text="Play lotto",
                               fg='white', bd='5', bg='blue')
         playlotto.place(x=800, y=600, height=60, width=200)
 
 
-=======
-        
-        self.button()
-      
-    def button(self):
-        
-        logout = tk.Button(self, text="Logout", fg='white', bd = '5', bg = 'blue',
-                           command=self.destroy)
-        logout.pack()
-        logout.place(x=800, y=100, height=60, width=200)
-        
-        addtrans = tk.Button(self, text="Add transaction", fg='white', bd = '5', bg = 'blue' )
-        addtrans.place(x=800, y=200, height=60, width=200)
-        
-        editaccount = tk.Button(self, text="Edit account", fg='white', bd = '5', bg = 'blue' )
-        editaccount.place(x=800, y=300, height=60, width=200)
-        
-        setup = tk.Button(self, text="Setup", fg='white', bd = '5', bg = 'blue' )
-        setup.place(x=800, y=400, height=60, width=200)
-        
-        Accountsum = tk.Button(self, text="Account summary", fg='white', bd = '5', bg = 'blue' )
-        Accountsum.place(x=800, y=500, height=60, width=200)
-        
-        playlotto = tk.Button(self, text="Play lotto", fg='white', bd = '5', bg = 'blue' )
-        playlotto.place(x=800, y=600, height=60, width=200)
-        
-        
-        
-        
->>>>>>> 5ba35a359df1cf0b6c760e53ebd5528aef1ddae7
 app = AmazingButler()
 app.mainloop()
