@@ -298,34 +298,36 @@ class PageOne(tk.Frame):
       
     def button(self):
         
-        self.grid_rowconfigure(0, weight=1, minsize=30)
-        self.grid_columnconfigure(0, weight=1, minsize=30)
+        self.columnconfigure(0, weight=1)
+        self.columnconfigure(1, weight=2)
         
+        self.rowconfigure(0, weight=1)
         
         logout = tk.Button(self, text="Logout", fg='white', bd = '5', bg = 'blue',
                            command=lambda: self.controller.show_frame(StartPage))
         logout.config(height = 3, width = 15)
-        logout.grid(row=1, column=4, padx=5, pady=5, sticky = 'nw')
+        logout.grid(row=0, column=6, ipadx=5, ipady=5, sticky = 'n')
         
         addtrans = tk.Button(self, text="Add transaction", fg='white', bd = '5', bg = 'blue' )
         addtrans.config(height = 3, width = 15)
-        addtrans.grid(row=2, column=4, padx=5, pady=5, sticky = 'nw')
+        addtrans.grid(row=1, column=6, ipadx=5, ipady=10, sticky = 'nw')
         
         editaccount = tk.Button(self, text="Edit account", fg='white', bd = '5', bg = 'blue' )
         editaccount.config(height = 3, width = 15)
-        editaccount.grid(row=3, column=4, padx=5, pady=5, sticky = 'sw')
+        editaccount.grid(row=3, column=4, ipadx=5, ipady=5, sticky = 'sw')
         
         setup = tk.Button(self, text="Setup", fg='white', bd = '5', bg = 'blue' )
         setup.config(height = 3, width = 15)
-        setup.grid(row=4, column=4, padx=5, pady=5, sticky = 'sw')
+        setup.grid(row=4, column=4, ipadx=5, ipady=5, sticky = 'sw')
         
         Accountsum = tk.Button(self, text="Setup", fg='white', bd = '5', bg = 'blue' )
         Accountsum.config(height = 3, width = 15)
-        Accountsum.grid(row=5, column=4, padx=5, pady=5, sticky = 'sw')
+        Accountsum.grid(row=5, column=4, ipadx=5, ipady=5, sticky = 'sw')
         
         playlotto = tk.Button(self, text="Play lotto", fg='white', bd = '5', bg = 'blue' )
         playlotto.config(height = 3, width = 15)
-        playlotto.grid(row=6, column=4, padx=5, pady=5, sticky = 'sw')
+        playlotto.grid(row=6, column=4, ipadx=5, ipady=5, sticky = 'sw')
+
         
 
     def clock_image(self, hr, min_, sec_):
@@ -414,6 +416,7 @@ class PageOne(tk.Frame):
                              font=("Bold", 15), bg="white")
         self.temp.place(x=410, y=40)
         
+        
         # Temperature \'feel like'\ value
         temp_feel = owm.get_main('feels_like')
         # Weather description
@@ -424,6 +427,7 @@ class PageOne(tk.Frame):
                                  desc.capitalize()), font=("Bold", 13), bg="white")
         self.fell_lbl.place(x=360, y=70)
         
-        
+
+       
 app = AmazingButler()
 app.mainloop()
