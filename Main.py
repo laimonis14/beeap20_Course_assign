@@ -288,6 +288,7 @@ class PageOne(tk.Frame):
         editaccount = tk.Button(self, text="Edit account",
                                 fg='white', bd='5', bg='blue',
                                 command=lambda: self.controller.show_frame(PageEdit))
+
         editaccount.place(x=800, y=300, height=60, width=200)
 
         setup = tk.Button(self, text="Setup", fg='white', bd='5', bg='blue')
@@ -397,17 +398,23 @@ class PageTransactions(tk.Frame):
         self.lbl.config(image=self.img)
         self.lbl.after(200, self.working)
         
-        
+
 class PageEdit(tk.Frame):
     
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
+
         
         logout = tk.Button(self, text="Logout", fg='white',
                            bd='5', bg='blue',
                            command=lambda: self.controller.show_frame(StartPage))
         logout.place(x=650, y=60, height=60, width=200)
+
+        
+        
+
+
 
 app = AmazingButler()
 app.mainloop()
