@@ -45,7 +45,7 @@ class AmazingButler(tk.Tk):
 
         self.frames = {}
 
-        for F in (StartPage, PageOne):
+        for F in (StartPage, PageOne, PageTransactions):
 
             frame = F(container, self)
             frame.configure(bg='white')
@@ -281,7 +281,8 @@ class PageOne(tk.Frame):
         logout.place(x=800, y=100, height=60, width=200)
 
         addtrans = tk.Button(self, text="Add transaction",
-                             fg='white', bd='5', bg='blue')
+                             fg='white', bd='5', bg='blue',
+                             command=lambda: self.controller.show_frame(PageTransactions))
         addtrans.place(x=800, y=200, height=60, width=200)
 
         editaccount = tk.Button(self, text="Edit account",
@@ -298,6 +299,102 @@ class PageOne(tk.Frame):
         playlotto = tk.Button(self, text="Play lotto",
                               fg='white', bd='5', bg='blue')
         playlotto.place(x=800, y=600, height=60, width=200)
+        
+class PageTransactions(tk.Frame):
+    
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        self.controller = controller
+        self.lbl = tk.Label(self, bg="white")
+        self.lbl.place(x=10, y=10, height=200, width=200)
+
+        StartPage.calendar(self)
+        self.working()
+        self.transaction()
+
+        logout = tk.Button(self, text="Logout", fg='white',
+                           bd='5', bg='blue',
+                           command=lambda: self.controller.show_frame(StartPage))
+        logout.place(x=650, y=60, height=60, width=200)
+
+        confirm_btn = tk.Button(self, text='Add transaction', 
+                                fg='white', bd='5', bg='blue',
+                                command=lambda: self.controller.show_frame(StartPage))
+        confirm_btn.place(x=650, y=140, height=60, width=200)
+
+        return_btn = tk.Button(self, text='Cancel and return',
+                               fg='white', bd='5', bg='blue',
+                               command=lambda: self.controller.show_frame(PageOne))
+        return_btn.place(x=650, y=220, height=60, width=200,)
+        
+    def transaction(self):
+
+        category_label = tk.Label(self, text="Category:", bg='white',
+                                  justify='center', font='bold', width=8)
+        category_label.place(x=290, y=100)
+
+        category_Box = ttk.Combobox(self, font=14, width=18)
+        category_Box.place(x=380, y=100, height=30)
+        category_Box.bind("<<ComboboxSelected>>")
+
+        amount_label = tk.Label(self, text='Amount:', bg='white',
+                                justify='center', font='bold', width=8)
+        amount_label.place(x=290, y=200)
+
+        Amount_Box = tk.Entry(self, font=20, bd='2')
+        Amount_Box.place(x=380, y=200, height=30)
+
+        date_label = tk.Label(self, text='Date:', bg='white',
+                              justify='center', font='bold', width=8)
+        date_label.place(x=290, y=300)
+
+        date_Box = tk.Entry(self, font=14, width=20, bd='2')
+        date_Box.place(x=380, y=300, height=30)
+
+        check_box = tk.Checkbutton(self,  bg='white')
+        check_box.place(x=380, y=360)
+        check_box = tk.Label(self, text='Money in?', justify='center',
+                             font='bold', bg='white', width=8)
+        check_box.place(x=290, y=360)
+
+    def clock_image(self, hr, min_, sec_):
+        clock = Image.new("RGB", (400, 400), (255, 255, 255))
+        draw = ImageDraw.Draw(clock)
+        # For clock image
+        bg = Image.open("clock4.png")
+        bg = bg.resize((200, 200), Image.ANTIALIAS)
+        clock.paste(bg, (100, 100))
+
+        # Hour Line Image
+        origin = 200, 200
+        draw.line((origin, 200+50*mt.sin(mt.radians(hr)),
+                   200-50*mt.cos(mt.radians(hr))), fill="black", width=4)
+        # Min Line Image
+        draw.line((origin, 200+80*mt.sin(mt.radians(min_)),
+                   200-80*mt.cos(mt.radians(min_))), fill="black", width=4)
+        # Sec Line Image
+        draw.line((origin, 200+80*mt.sin(mt.radians(sec_)),
+                   200-80*mt.cos(mt.radians(sec_))), fill="black", width=1)
+
+        draw.ellipse((195, 195, 210, 210), fill="black")
+
+        clock.save("clock_new.png")
+
+    def working(self):
+
+        h = datetime.now().time().hour
+        m = datetime.now().time().minute
+        s = datetime.now().time().second
+
+        # Formula to convert clock in circle values for analog clock
+        hr = (h/12)*360
+        min_ = (m/60)*360
+        sec_ = (s/60)*360
+
+        self.clock_image(hr, min_, sec_)
+        self.img = ImageTk.PhotoImage(file="clock_new.png")
+        self.lbl.config(image=self.img)
+        self.lbl.after(200, self.working)
 
 
 app = AmazingButler()
