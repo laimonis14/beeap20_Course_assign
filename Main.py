@@ -178,11 +178,13 @@ class StartPage(tk.Frame):
         # Login button
         Login_button = tk.Button(self,
                                  text='Login', command=self.login_verify,
-                                 height=3, width=13)
+                                 height=3, width=13, fg='white',
+                                 bd='5', bg='blue')
         Login_button.place(x=400, y=350)
         # Register button
         Register_button = tk.Button(self, text="Register",
                                     command=self.register,
+                                    fg='white', bd='5', bg='blue',
                                     width=13, height=3)
         Register_button.place(x=540, y=350)
         # Username label
