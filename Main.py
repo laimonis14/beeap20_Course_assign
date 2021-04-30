@@ -45,7 +45,7 @@ class AmazingButler(tk.Tk):
 
         self.frames = {}
 
-        for F in (StartPage, PageOne, PageTransactions):
+        for F in (StartPage, PageOne, PageTransactions, PageEdit):
 
             frame = F(container, self)
             frame.configure(bg='white')
@@ -286,7 +286,7 @@ class PageOne(tk.Frame):
         addtrans.place(x=800, y=200, height=60, width=200)
 
         editaccount = tk.Button(self, text="Edit account",
-                                fg='white', bd='5', bg='blue')
+                                fg='white', bd='5', bg='blue', command=lambda: self.controller.show_frame(PageEdit))
         editaccount.place(x=800, y=300, height=60, width=200)
 
         setup = tk.Button(self, text="Setup", fg='white', bd='5', bg='blue')
@@ -395,6 +395,51 @@ class PageTransactions(tk.Frame):
         self.img = ImageTk.PhotoImage(file="clock_new.png")
         self.lbl.config(image=self.img)
         self.lbl.after(200, self.working)
+        
+class PageEdit(tk.Frame):
+    
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        self.controller = controller
+        self.lbl = tk.Label(self, bg="white")
+        self.lbl.place(x=10, y=10, height=200, width=200)
+
+        StartPage.calendar(self)
+      
+        self.edit()
+        
+        logout = tk.Button(self, text="Logout", fg='white',
+                           bd='5', bg='blue',
+                           command=lambda: self.controller.show_frame(StartPage))
+        logout.place(x=650, y=60, height=60, width=200)
+
+        accept_ch = tk.Button(self, text='Add transaction', 
+                                fg='white', bd='5', bg='blue')
+                                
+        accept_ch.place(x=650, y=140, height=60, width=200)
+
+        return_btn = tk.Button(self, text='Return',
+                               fg='white', bd='5', bg='blue',
+                               command=lambda: self.controller.show_frame(PageOne))
+        return_btn.place(x=650, y=220, height=60, width=200,)
+        
+        view_ref = tk.Button(self, text='Return',
+                               fg='white', bd='5', bg='blue')
+                               
+        view_ref.place(x=450, y=220, height=60, width=200,)
+        
+        export_csv = tk.Button(self, text='Return',
+                               fg='white', bd='5', bg='blue')
+                               
+        export_csv.place(x=450, y=220, height=60, width=200,)
+        
+    def edit(self):
+
+        category_label = tk.Label(self, text="Category:", bg='white',
+                                  justify='center', font='bold', width=8)
+        category_label.place(x=290, y=100)
+        
+        
 
 
 app = AmazingButler()
