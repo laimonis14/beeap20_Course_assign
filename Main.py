@@ -7,11 +7,12 @@ import sqlite3
 
 
 from datetime import *
-from tkcalendar import Calendar
+from tkcalendar import Calendar, DateEntry
 from PIL import Image, ImageTk, ImageDraw
 import requests, base64
 from WeatherFile import OpenWeatherMap, OWIconLabel
 from registration_file import registers
+from DB import transactions
 
 
 class AmazingButler(tk.Tk):
@@ -301,15 +302,16 @@ class PageOne(tk.Frame):
         playlotto = tk.Button(self, text="Play lotto",
                               fg='white', bd='5', bg='blue')
         playlotto.place(x=800, y=600, height=60, width=200)
-        
+
 class PageTransactions(tk.Frame):
-    
+
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
         self.lbl = tk.Label(self, bg="white")
         self.lbl.place(x=10, y=10, height=200, width=200)
 
+        transactions.create_table(self)
         StartPage.calendar(self)
         self.working()
         self.transaction()
@@ -319,45 +321,76 @@ class PageTransactions(tk.Frame):
                            command=lambda: self.controller.show_frame(StartPage))
         logout.place(x=650, y=60, height=60, width=200)
 
-        confirm_btn = tk.Button(self, text='Add transaction', 
+        confirm_btn = tk.Button(self, text='Add transaction',
                                 fg='white', bd='5', bg='blue',
-                                command=lambda: self.controller.show_frame(StartPage))
+                                command=self.entry_data
+                                )
         confirm_btn.place(x=650, y=140, height=60, width=200)
 
         return_btn = tk.Button(self, text='Cancel and return',
                                fg='white', bd='5', bg='blue',
                                command=lambda: self.controller.show_frame(PageOne))
         return_btn.place(x=650, y=220, height=60, width=200,)
-        
+
     def transaction(self):
+        global entry_verify
+        global opts
+        global date_Box
+        global var
+
+        entry_verify = tk.IntVar()
+
+        conn = sqlite3.connect('Users_data.db')
+        c = conn.cursor()
+        c.execute("SELECT * FROM Income")
+        names = ['Salary', 'Rent', 'Savings', 'Travel', 'Groceries',
+                 'Subscriptions', 'Others']
+        opts = tk.StringVar()
+        var = tk.StringVar()
 
         category_label = tk.Label(self, text="Category:", bg='white',
                                   justify='center', font='bold', width=8)
         category_label.place(x=290, y=100)
 
-        category_Box = ttk.Combobox(self, font=14, width=18)
+        category_Box = ttk.Combobox(self, font=14, width=18, textvariable=opts)
         category_Box.place(x=380, y=100, height=30)
+        category_Box['values'] = names
         category_Box.bind("<<ComboboxSelected>>")
 
         amount_label = tk.Label(self, text='Amount:', bg='white',
                                 justify='center', font='bold', width=8)
         amount_label.place(x=290, y=200)
 
-        Amount_Box = tk.Entry(self, font=20, bd='2')
+        Amount_Box = tk.Entry(self, font=20, bd='2', textvariable=entry_verify)
         Amount_Box.place(x=380, y=200, height=30)
 
         date_label = tk.Label(self, text='Date:', bg='white',
                               justify='center', font='bold', width=8)
         date_label.place(x=290, y=300)
 
-        date_Box = tk.Entry(self, font=14, width=20, bd='2')
+        date_Box = DateEntry(self, font=14, width=20, bd='2', selectmode="day")
         date_Box.place(x=380, y=300, height=30)
 
-        check_box = tk.Checkbutton(self,  bg='white')
+        check_box = tk.Checkbutton(self,  bg='white', variable=var,
+                                   offvalue='Expenses', onvalue='Income')
         check_box.place(x=380, y=360)
         check_box = tk.Label(self, text='Money in?', justify='center',
                              font='bold', bg='white', width=8)
         check_box.place(x=290, y=360)
+
+    def entry_data(self):
+
+        val2 = var.get()
+        val1 = entry_verify.get()
+        sel = opts.get()
+        date = date_Box.get_date()
+        conn = sqlite3.connect('Users_data.db')
+        c = conn.cursor()
+        c.execute('INSERT INTO Income (Amount, category, date, InEx) VALUES (?,?,?,?)',
+                  (val1, sel, date, val2))
+
+        conn.commit()
+        conn.close()
 
     def clock_image(self, hr, min_, sec_):
         clock = Image.new("RGB", (400, 400), (255, 255, 255))
