@@ -11,10 +11,10 @@ class transactions:
         c = conn.cursor()
         c.execute("""CREATE TABLE IF NOT EXISTS Income(
            
-           Amount real NOT NULL,
-           category text NOT NULL,
-           date text NOT NULL,
-           InEx text NOT NULL
+           Amount real ,
+           category text ,
+           date textL,
+           InEx text  
            
           
             )""")
