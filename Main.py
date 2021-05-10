@@ -17,6 +17,7 @@ import requests, base64
 from WeatherFile import OpenWeatherMap, OWIconLabel
 from registration_file import registers
 from DB import transactions
+from dice import dices
 
 
 class AmazingButler(tk.Tk):
@@ -303,8 +304,13 @@ class PageOne(tk.Frame):
         Accountsum.place(x=800, y=500, height=60, width=200)
 
         playlotto = tk.Button(self, text="Play lotto",
-                              fg='white', bd='5', bg='blue')
+                              fg='white', bd='5', bg='blue',
+                              command=self.lot)
         playlotto.place(x=800, y=600, height=60, width=200)
+
+    def lot(self):
+        Lotto.roll_dice(self)
+
 
 class PageTransactions(tk.Frame):
 
@@ -613,6 +619,10 @@ class Summary(tk.Frame):
         canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
         conn.close()
+        
+class Lotto():
+    def roll_dice(self):
+        dices.roll_dice(self)
 
 
 app = AmazingButler()
