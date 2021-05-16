@@ -3,13 +3,14 @@ import tkinter as tk
 from tkinter import ttk
 import math as mt
 import time as tm
-import sqlite3
+import sqlite3 
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
-
-
+from tkinter import messagebox
+from OriginalsavingsDB import entry_savings
+import pandas as pd
 from datetime import *
 from tkcalendar import Calendar, DateEntry
 from PIL import Image, ImageTk, ImageDraw
@@ -18,6 +19,10 @@ from WeatherFile import OpenWeatherMap, OWIconLabel
 from registration_file import registers
 from DB import transactions
 from dice import dices
+import csv
+from dateutil import parser
+from matplotlib import style
+style.use('fivethirtyeight')
 
 
 class AmazingButler(tk.Tk):
@@ -30,7 +35,6 @@ class AmazingButler(tk.Tk):
 
         container.grid_rowconfigure(0, weight=1)
         container.grid_columnconfigure(0, weight=1)
-
         menubar = tk.Menu(container)
         filemenu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label='File', menu=filemenu)
@@ -49,7 +53,7 @@ class AmazingButler(tk.Tk):
 
         self.frames = {}
 
-        for F in (StartPage, PageOne, PageTransactions, PageEdit, Summary):
+        for F in (StartPage, PageOne, PageTransactions, PageEdit, Pagesetup, Summary):
 
             frame = F(container, self)
             frame.configure(bg='white')
@@ -80,6 +84,7 @@ class StartPage(tk.Frame):
         self.calendar()
         self.weather()
         self.Login()
+       # self.graph_sav()
 
     def clock_image(self, hr, min_, sec_):
         clock = Image.new("RGB", (400, 400), (255, 255, 255))
@@ -263,6 +268,8 @@ class StartPage(tk.Frame):
         if login_success_screen.showinfo('Success', 'Login Success'):
             lambda: self.controller.show_frame(PageOne)
             login_success_screen.destroy()
+            
+   
 
 
 class PageOne(tk.Frame):
@@ -271,10 +278,54 @@ class PageOne(tk.Frame):
         tk.Frame.__init__(self, parent)
 
         self.controller = controller
-
+        self.lbl = tk.Label(self, bg="white")
+        self.lbl.place(x=10, y=10, height=200, width=200)
+       
         StartPage.weather(self)
         StartPage.calendar(self)
+        self.working()
         self.button()
+        self.account_bal()
+        self.graph_save()
+        
+    def clock_image(self, hr, min_, sec_):
+        clock = Image.new("RGB", (400, 400), (255, 255, 255))
+        draw = ImageDraw.Draw(clock)
+        # For clock image
+        bg = Image.open("clock4.png")
+        bg = bg.resize((200, 200), Image.ANTIALIAS)
+        clock.paste(bg, (100, 100))
+
+        # Hour Line Image
+        origin = 200, 200
+        draw.line((origin, 200+50*mt.sin(mt.radians(hr)),
+                   200-50*mt.cos(mt.radians(hr))), fill="black", width=4)
+        # Min Line Image
+        draw.line((origin, 200+80*mt.sin(mt.radians(min_)),
+                   200-80*mt.cos(mt.radians(min_))), fill="black", width=4)
+        # Sec Line Image
+        draw.line((origin, 200+80*mt.sin(mt.radians(sec_)),
+                   200-80*mt.cos(mt.radians(sec_))), fill="black", width=1)
+
+        draw.ellipse((195, 195, 210, 210), fill="black")
+
+        clock.save("clock_new.png")
+
+    def working(self):
+
+        h = datetime.now().time().hour
+        m = datetime.now().time().minute
+        s = datetime.now().time().second
+
+        # Formula to convert clock in circle values for analog clock
+        hr = (h/12)*360
+        min_ = (m/60)*360
+        sec_ = (s/60)*360
+
+        self.clock_image(hr, min_, sec_)
+        self.img = ImageTk.PhotoImage(file="clock_new.png")
+        self.lbl.config(image=self.img)
+        self.lbl.after(200, self.working)
 
     def button(self):
 
@@ -295,7 +346,7 @@ class PageOne(tk.Frame):
 
         editaccount.place(x=800, y=300, height=60, width=200)
 
-        setup = tk.Button(self, text="Setup", fg='white', bd='5', bg='blue')
+        setup = tk.Button(self, text="Setup", fg='white', bd='5', bg='blue', command=lambda: self.controller.show_frame(Pagesetup) )
         setup.place(x=800, y=400, height=60, width=200)
 
         Accountsum = tk.Button(self, text="Account summary",
@@ -307,9 +358,66 @@ class PageOne(tk.Frame):
                               fg='white', bd='5', bg='blue',
                               command=self.lot)
         playlotto.place(x=800, y=600, height=60, width=200)
+    
+    def account_bal(self):
+       
+        values = []
+        conn = sqlite3.connect('Users_data.db')
+        c = conn.cursor()
+        c.execute('SELECT SUM (Amount) FROM Income WHERE InEx = "Income"')
+        income = c.fetchall() 
+       
+        Money_in = tk.Label(self, text='Account Balance in Euros', font='bold', bg='white')
+        Money_in.place(x=480, y=250)
+        Money_in_show = tk.Label(self, text=income,
+                                 font='bold', bg='white', borderwidth=2,
+                                 relief="solid", width=20)
+        Money_in_show.place(x=480, y=280)
+        
+    def graph_save(self):
+        conn = sqlite3.connect('SavingsOriginal.db')
+        c = conn.cursor()
+      
+        c.execute('SELECT Date, Saving, Spending FROM SavingsOriginal ORDER BY Date DESC')
+        data = c.fetchall()
+
+        date = []        
+        savings = []
+        spendings = []
+        
+        for row in data:
+                date.append(parser.parse(row[0]))
+                savings.append(row[1])
+                spendings.append(row[2])
+         
+        fig = Figure(figsize=(2, 2), dpi=100)
+        fig = plt.figure()
+
+        ax1 = fig.add_subplot(111)
+        ax1.set_title("My financial targets", fontsize=14)
+        ax1.set_facecolor('white')
+        ax1.set_ylabel("Money (€)", fontsize=14)
+        ax1.plot_date(date, savings, '-', label="Savings", color='blue')
+        ax1.plot_date(date, spendings, '-', label="Spendings", color='lightblue')
+        ax1.grid(False)
+        ax1.legend(loc='best', framealpha=0.5)
+        x_axis = ax1.axes.get_xaxis()
+        x_axis.set_visible(False)
+        plt.tight_layout()
+
+        First_Canvas = tk.Canvas(self, width=400, height=400)
+        First_Canvas.place(x=300, y=400)
+        
+        canvas = FigureCanvasTkAgg(fig, First_Canvas)
+        canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        conn.close()
+
+
 
     def lot(self):
         Lotto.roll_dice(self)
+        
+        
 
 
 class PageTransactions(tk.Frame):
@@ -332,8 +440,7 @@ class PageTransactions(tk.Frame):
 
         confirm_btn = tk.Button(self, text='Add transaction',
                                 fg='white', bd='5', bg='blue',
-                                command=self.entry_data
-                                )
+                                command=self.entry_data)
         confirm_btn.place(x=650, y=140, height=60, width=200)
 
         return_btn = tk.Button(self, text='Cancel and return',
@@ -348,7 +455,7 @@ class PageTransactions(tk.Frame):
         global var
 
         entry_verify = tk.IntVar()
-
+        db_path = r'C:\Users\Prosserc\Documents\Geocoding\test.db'
         conn = sqlite3.connect('Users_data.db')
         c = conn.cursor()
         c.execute("SELECT * FROM Income")
@@ -442,17 +549,290 @@ class PageTransactions(tk.Frame):
 
 
 class PageEdit(tk.Frame):
-
+    
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
-        self.controller = controller
-
+        self.controller = controller 
+        
+        #self.loadEntry()
+        self.buttons()
+        self.selecting_dates()
+        #self.select_data()
+        self.refresh()
+        self.to_csv()
+     
+    
+    def buttons(self):
         logout = tk.Button(self, text="Logout", fg='white',
                            bd='5', bg='blue',
                            command=lambda: self.controller.show_frame(StartPage))
-        logout.place(x=650, y=60, height=60, width=200)
+        logout.place(x=900, y=100, height=60, width=200)
+        
+        accept_ch = tk.Button(self, text="Accept changes", fg='white',
+                           bd='5', bg='blue', command=lambda: select_data(self) )
+        accept_ch.place(x=900, y=200, height=60, width=200)
+        
+        ret = tk.Button(self, text="Return", fg='white',
+                           bd='5', bg='blue',
+                           command=lambda: self.controller.show_frame(PageTransactions))
+        ret.place(x=900, y=300, height=60, width=200)
 
+        vf = tk.Button(self, text="View", fg='white',
+                           bd='5', bg='blue',command = self.showallrecords)
+        vf.place(x=650, y=100, height=60, width=200)
+        
+        Refresh = tk.Button(self, text="Refresh", fg='white',
+                           bd='5', bg='blue',command = self.refresh)
+        Refresh.place(x=650, y=200, height=60, width=200)
+        
+        export_csv = tk.Button(self, text="Export to CSV", fg='white',
+                           bd='5', bg='blue',command = self.to_csv)
+        export_csv.place(x=650, y=300, height=60, width=200)
+        
 
+    def selecting_dates(self, event=None):
+        global begin_date_Box
+        global end_date_Box
+        
+        begin_date_label = tk.Label(self, text ='Begin Date:', bg='white',
+                                justify='right', font='bold', width=15)
+        begin_date_label.place(x=50, y=100)
+        
+        begin_date_Box = DateEntry(self, font=14, width=10, bd='2', selectmode="day", date_pattern='yyyy-mm-dd')
+        begin_date_Box.place(x=200, y=100)
+        
+        end_date_label = tk.Label(self, text ='End Date:', bg='white',
+                                justify='right', font='bold', width=15)
+        end_date_label.place(x=350, y=100)
+        end_date_Box = DateEntry(self, font=14, width=10, bd='2', selectmode="day", date_pattern='yyyy-mm-dd')
+        end_date_Box.place(x=500, y=100)
+       
+        
+    def showallrecords(self):
+                       
+        since = begin_date_Box.get()
+        until = end_date_Box.get()
+        
+             
+        conn = sqlite3.connect('Users_data.db')
+        c = conn.cursor()
+        c.execute('SELECT * FROM Income WHERE date BETWEEN ? AND ?', (since,until))  
+ 
+        data = c.fetchall()  
+         
+        self.style = ttk.Style()
+        self.style.configure("mystyle.Treeview", highlightthickness=0, bd=1, font=('Calibri', 11)) # Modify the font of the body
+        self.style.configure("mystyle.Treeview.Heading", font=('Calibri', 13,'bold')) # Modify the font of the headings
+        
+        columns = ('AMOUNT', 'CATEGORY', 'DATE', 'ID')
+        
+        self.tree = ttk.Treeview(self, columns = columns, show='headings', style="mystyle.Treeview")
+        
+
+        #Headings for the table
+        self.tree.heading("#0", text="", anchor=tk.CENTER)
+        self.tree.heading("AMOUNT", text="AMOUNT", anchor=tk.CENTER)
+        self.tree.heading("CATEGORY", text="CATEGORY", anchor=tk.CENTER)
+        self.tree.heading("ID", text="ID", anchor=tk.CENTER)
+        self.tree.heading("DATE", text="DATE", anchor=tk.CENTER)   
+        
+            #Format Columns for the table
+        self.tree.column("#0", anchor=tk.CENTER, width=120)
+        self.tree.column("AMOUNT", anchor=tk.CENTER, width = 120)
+        self.tree.column("CATEGORY", anchor=tk.CENTER, width = 120)
+        self.tree.column("ID", anchor = tk.CENTER, width = 80)
+        self.tree.column("DATE", anchor =tk.CENTER, width = 120)
+
+        for row in data:
+         self.tree.insert(parent = '', index=tk.END, values=row) 
+         
+     
+        self.tree.grid(row=0, column=0)
+        self.tree.place(x=100,y=300)
+        
+        conn.commit()
+        conn.close()
+     
+    def to_csv(self):
+       
+        conn = sqlite3.connect('Users_data.db',  isolation_level=None,
+                       detect_types=sqlite3.PARSE_COLNAMES)
+        #c = conn.cursor()
+      
+
+        db_df = pd.read_sql_query("SELECT * FROM Income", conn)
+        db_df.to_csv('database1.csv', index=False)
+        
+     
+    def refresh(self):
+        
+        since = begin_date_Box.get()
+        until = end_date_Box.get()
+       
+
+        conn = sqlite3.connect('Users_data.db')
+        c = conn.cursor()
+        
+        c.execute('SELECT * FROM Income WHERE date BETWEEN ? AND ?', (since,until))  
+        
+        self.style = ttk.Style()
+        self.style.configure("mystyle.Treeview", highlightthickness=0, bd=1, font=('Calibri', 11)) # It modifies the font of the body
+        self.style.configure("mystyle.Treeview.Heading", font=('Calibri', 13,'bold')) # It modifies the font of the headings
+        
+        columns = ('AMOUNT', 'CATEGORY', 'DATE', 'ID')
+        
+        self.tree = ttk.Treeview(self, columns = columns, show='headings', style="mystyle.Treeview")
+        
+
+        #Headings
+        self.tree.heading("#0", text="", anchor=tk.CENTER)
+        self.tree.heading("AMOUNT", text="AMOUNT", anchor=tk.CENTER)
+        self.tree.heading("CATEGORY", text="CATEGORY", anchor=tk.CENTER)
+        self.tree.heading("ID", text="ID", anchor=tk.CENTER)
+        self.tree.heading("DATE", text="DATE", anchor=tk.CENTER)   
+        
+            #Format Columns
+        self.tree.column("#0", anchor=tk.CENTER, width=120)
+        self.tree.column("AMOUNT", anchor=tk.CENTER, width = 120)
+        self.tree.column("CATEGORY", anchor=tk.CENTER, width = 120)
+        self.tree.column("ID", anchor = tk.CENTER, width = 80)
+        self.tree.column("DATE", anchor =tk.CENTER, width = 120)
+
+        data = c.fetchall() 
+        for row in data:
+         self.tree.insert(parent = '', index=tk.END, values=row) 
+         
+        self.tree.grid(row=0, column=0)
+        self.tree.place(x=100,y=300)
+        
+      
+        for i in self.tree.get_children():
+           self.tree.delete(i) #clears current values from tree
+
+           for row in data:
+              self.tree.insert("" , index=tk.END,values=row)
+            
+        conn.commit()
+        conn.close()
+            #self.tree.delete(*self.tree.get_children())
+            #self.tree.insert('','end', values = row)
+        
+        
+        
+class Pagesetup(tk.Frame):
+    
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        self.controller = controller
+        
+        self.buttons()
+        self.savings()
+        self.entry_savings()
+        #self.update_task()
+        entry_savings.create_table(self)
+        
+    def buttons(self):
+        logout = tk.Button(self, text="Logout", fg='white',
+                           bd='5', bg='blue',
+                           command=lambda: self.controller.show_frame(StartPage))
+        logout.place(x=900, y=100, height=60, width=200)
+        
+        save_btn = tk.Button(self, text='Add Target',
+                                fg='white', bd='5', bg='blue', command=self.entry_savings
+                                
+                                )
+        save_btn.place(x=900, y=200, height=60, width=200)
+             
+
+        return_btn = tk.Button(self, text='Cancel and return',
+                               fg='white', bd='5', bg='blue',
+                               command=lambda: self.controller.show_frame(PageEdit))
+        return_btn.place(x=900, y=400, height=60, width=200)
+        
+
+        
+    def savings(self):
+        #global var1
+        global var2
+        global var3
+        global var4
+        global opts 
+      
+        #var1 = tk.IntVar()
+        var2 = tk.IntVar()
+        var3 = tk.IntVar()
+        var4 = tk.IntVar()
+        opts =tk.StringVar()
+
+       
+        Saving_target_label = tk.Label(self, text ='Saving target', bg='white',
+                                justify='right', font='bold', width=15)
+        Saving_target_label.place(x=190, y=150)
+        
+        Saving_target = tk.Entry(self, font=20, bd='2', textvariable=var2)
+        Saving_target.place(x=380, y=150)
+        
+        Spending_target_label = tk.Label(self, text ='Spending target', bg='white',
+                                justify='right', font='bold', width=15)
+        Spending_target_label.place(x=190, y=250)
+        
+        Spending_target = tk.Entry(self, font=20, bd='2', textvariable=var3)
+        Spending_target.place(x=380, y=250)
+        
+        Monthly_budget_label = tk.Label(self, text ='Monthly estimated budget', bg='white',
+                                justify='right', font='bold', width=30)
+        Monthly_budget_label.place(x=90, y=350)
+        
+        Monthly_budget = tk.Entry(self, font=20, bd='2', textvariable=var4)
+        Monthly_budget.place(x=380, y=350)
+        
+        date_label = tk.Label(self, text ='Date', bg='white',
+                                justify='right', font='bold', width=15)
+        date_label.place(x=190, y=450)
+        
+        date_Box = DateEntry(self, font=14, width=20, bd='2', selectmode="day")
+        date_Box.place(x=380, y=450, height=30)
+        
+        
+    def entry_savings(self):
+        #val1 = var1.get()
+        sel = opts.get()
+        val2 = var2.get()
+        val3 = var3.get()
+        val4 = var4.get()
+        date = date_Box.get_date()
+        conn = sqlite3.connect('SavingsOriginal.db')
+        c = conn.cursor()
+        c.execute('INSERT INTO SavingsOriginal(id, Saving, Spending, Budget, Date) VALUES (?,?,?,?,?)',
+                  (sel,val2,val3,val4,date))
+
+        conn.commit()
+        conn.close()
+        
+       
+        
+    def update_task(self):
+       
+        #val1 = var1.get()
+        sel = opts.get()
+        val2 = var2.get()
+        val3 = var3.get()
+        val4 = var4.get()
+        date = date_Box.get_date()
+        conn = sqlite3.connect('SavingsOriginal.db')
+        c = conn.cursor()
+       
+        c.execute("UPDATE SavingsOriginal set Saving = 10 where ID = 1.0")
+        
+        conn.commit()
+        conn.close()
+       
+        update_btn = tk.Button(self, text='Save Changes',
+                                fg='white', bd='5', bg='blue', command=self.update_task)
+        update_btn.place(x=900, y=300, height=60, width=200)
+       
+   
+        
 class Summary(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
@@ -608,7 +988,7 @@ class Summary(tk.Frame):
 
         f = Figure(figsize=(5, 5), dpi=100)
         a = f.add_subplot(111)
-        a.bar(y, values)
+        a.bar(y, values, color='blue')
 
         canvas = FigureCanvasTkAgg(f, First_Canvas)
 
