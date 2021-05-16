@@ -8,6 +8,7 @@ class dices:
         global gamble_screen
         
         date = datetime.now()
+        
         money_val = 10
         cat_val = 'Gambling'
         dat_value = date.strftime('%Y-%m-%d')
@@ -30,8 +31,8 @@ class dices:
           gamble_screen.after(1500, gamble_screen.destroy)
           conn = sqlite3.connect('Users_data.db')
           c = conn.cursor()
-          c.execute('INSERT INTO Income (Amount, category, date, InEx) VALUES(?,?,?,?)',
-                    (money_val, cat_val, dat_value, win_val))
+          c.execute('INSERT INTO Income (from_where, Amount, category, date, InEx) VALUES(?,?,?,?,?)',
+                    (from_where, money_val, cat_val, dat_value, win_val))
           conn.commit()
           conn.close()
         else:
@@ -43,7 +44,7 @@ class dices:
           gamble_screen.after(1500, gamble_screen.destroy)
           conn = sqlite3.connect('Users_data.db')
           c = conn.cursor()
-          c.execute('INSERT INTO Income (Amount, category, date, InEx) VALUES(?,?,?,?)',
-                    (money_val, cat_val, dat_value, loose_val))
+          c.execute('INSERT INTO Income (from_where, Amount, category, date, InEx) VALUES(?,?,?,?,?)',
+                    (from_where, money_val, cat_val, dat_value, loose_val))
           conn.commit()
           conn.close()

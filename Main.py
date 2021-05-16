@@ -59,7 +59,7 @@ class AmazingButler(tk.Tk):
 
         self.show_frame(StartPage)
         self.title("Amazing Butler App")
-        self.geometry("700x500")
+        self.geometry("900x500")
 
     def show_frame(self, cont):
 
