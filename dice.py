@@ -9,7 +9,7 @@ class dices:
         
         date = datetime.now()
         money_val = 10
-        cat_val = 'Others'
+        cat_val = 'Gambling'
         dat_value = date.strftime('%Y-%m-%d')
         win_val = 'Income'
         loose_val = 'Expenses'
