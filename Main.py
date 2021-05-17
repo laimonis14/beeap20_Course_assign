@@ -35,18 +35,20 @@ class AmazingButler(tk.Tk):
         container.grid_columnconfigure(0, weight=1)
 
         self.frames = {}
-
-        for F in (StartPage, PageOne, PageTransactions, PageEdit, Summary, Setup):
-
-            frame = F(container, self)
+        for F,geometry in zip((StartPage, PageOne, PageTransactions, PageEdit, Summary, Setup), 
+                              ('700x550', '1050x720', '900x600','1050x550','1000x700','1050x500')):
+            cont = F.__name__
+            frame = F(parent=container, controller=self)
+            # store the frame and the geometry for this frame
+            self.frames[cont] = (frame, geometry)
             frame.configure(bg='white')
-            self.frames[F] = frame
 
             frame.grid(row=0, column=0, sticky="nsew")
 
-        self.show_frame(StartPage)
+
+        self.show_frame('StartPage')
         self.title("Amazing Butler App")
-        self.geometry("1100x750")
+        #self.geometry("1100x750")
         
         def save():
             files = [('All Files', '*.*'), 
@@ -58,7 +60,8 @@ class AmazingButler(tk.Tk):
         filemenu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label='File', menu=filemenu)
         filemenu.add_command(label='Save', command=save)
-        filemenu.add_command(label='LogOut', command=lambda: self.show_frame(StartPage))
+        filemenu.add_command(label='LogOut', 
+                             command=lambda: self.show_frame('StartPage'))
         filemenu.add_command(label='Exit', command=self.destroy)
                 
         def OpenUrl():
@@ -72,8 +75,11 @@ class AmazingButler(tk.Tk):
         tk.Tk.config(self, menu=menubar)
 
     def show_frame(self, cont):
-
-        frame = self.frames[cont]
+        
+        
+        frame, geometry = self.frames[cont]
+        self.update_idletasks()
+        self.geometry(geometry)
         frame.tkraise()
 
 
@@ -185,9 +191,10 @@ class StartPage(tk.Frame):
 
     def Login(self):
 
-
         global password_verify
-
+       
+        
+       
 
         password_verify = tk.StringVar()
         # Login button
@@ -195,17 +202,23 @@ class StartPage(tk.Frame):
                                  text='Login', command=self.login_verify,
                                  height=3, width=13, fg='white',
                                  bd='5', bg='blue')
-        Login_button.place(x=500, y=350)
+
+        
+        
+        Login_button.place(x=420, y=350)
 
         # Password label
-        self.password_lbl = tk.Label(self, text='Password', bg='white')
-        self.password_lbl.place(x=350, y=280)
+        self.password_lbl = tk.Label(self, text='Enter Password', 
+                                     bg='white', justify='center')
+        self.password_lbl.config(font=("Times New Roman", 12, "bold"))
+        self.password_lbl.place(x=420, y=250)
 
         global box2
 
         # Password insert box
-        box2 = tk.Entry(self, textvariable=password_verify, show="*")
-        box2.place(x=480, y=280)
+        box2 = tk.Entry(self, textvariable=password_verify, show="*",
+                        borderwidth = 3, width=20, font=20)
+        box2.place(x=380, y=280, height=30)
 
     def login_verify(self):
 
@@ -246,7 +259,7 @@ class StartPage(tk.Frame):
 
         # open new window after 1s
         login_success_screen.after(1000,
-                                   lambda: self.controller.show_frame(PageOne))
+                                   lambda: self.controller.show_frame('PageOne'))
         # closes pop up window after 1,5s
         login_success_screen.after(1500, login_success_screen.destroy)
 
@@ -258,7 +271,9 @@ class PageOne(tk.Frame):
 
         self.controller = controller
         self.load_graph()
-
+        self.lbl = tk.Label(self, bg="white")
+        self.lbl.place(x=10, y=10, height=200, width=200)
+        self.working()
         StartPage.weather(self)
         StartPage.calendar(self)
         self.button()
@@ -267,27 +282,27 @@ class PageOne(tk.Frame):
 
         logout = tk.Button(self, text="Logout",
                            fg='white', bd='5', bg='blue',
-                           command=lambda: self.controller.show_frame(StartPage))
+                           command=lambda: self.controller.show_frame('StartPage'))
         logout.pack()
         logout.place(x=800, y=100, height=60, width=200)
 
         addtrans = tk.Button(self, text="Add transaction",
                              fg='white', bd='5', bg='blue',
-                             command=lambda: self.controller.show_frame(PageTransactions))
+                             command=lambda: self.controller.show_frame('PageTransactions'))
         addtrans.place(x=800, y=200, height=60, width=200)
 
         editaccount = tk.Button(self, text="Edit account",
                                 fg='white', bd='5', bg='blue',
-                                command=lambda: self.controller.show_frame(PageEdit))
+                                command=lambda: self.controller.show_frame('PageEdit'))
         editaccount.place(x=800, y=300, height=60, width=200)
 
         setup = tk.Button(self, text="Setup", fg='white', bd='5', bg='blue',
-                          command=lambda: self.controller.show_frame(Setup))
+                          command=lambda: self.controller.show_frame('Setup'))
         setup.place(x=800, y=400, height=60, width=200)
 
         Accountsum = tk.Button(self, text="Account summary",
                                fg='white', bd='5', bg='blue',
-                               command=lambda: self.controller.show_frame(Summary))
+                               command=lambda: self.controller.show_frame('Summary'))
         Accountsum.place(x=800, y=500, height=60, width=200)
 
         playlotto = tk.Button(self, text="Play lotto",
@@ -305,9 +320,49 @@ class PageOne(tk.Frame):
         self.main_graph()
         self.get_balance()
         self.in_da_bank()
+        
 
     def lot(self):
         Lotto.roll_dice(self)
+    
+    def clock_image(self, hr, min_, sec_):
+        clock = Image.new("RGB", (400, 400), (255, 255, 255))
+        draw = ImageDraw.Draw(clock)
+        # For clock image
+        bg = Image.open("clock4.png")
+        bg = bg.resize((200, 200), Image.ANTIALIAS)
+        clock.paste(bg, (100, 100))
+
+        # Hour Line Image
+        origin = 200, 200
+        draw.line((origin, 200+50*mt.sin(mt.radians(hr)),
+                   200-50*mt.cos(mt.radians(hr))), fill="black", width=4)
+        # Min Line Image
+        draw.line((origin, 200+80*mt.sin(mt.radians(min_)),
+                   200-80*mt.cos(mt.radians(min_))), fill="black", width=4)
+        # Sec Line Image
+        draw.line((origin, 200+80*mt.sin(mt.radians(sec_)),
+                   200-80*mt.cos(mt.radians(sec_))), fill="black", width=1)
+
+        draw.ellipse((195, 195, 210, 210), fill="black")
+
+        clock.save("clock_new.png")
+
+    def working(self):
+
+        h = datetime.now().time().hour
+        m = datetime.now().time().minute
+        s = datetime.now().time().second
+
+        # Formula to convert clock in circle values for analog clock
+        hr = (h/12)*360
+        min_ = (m/60)*360
+        sec_ = (s/60)*360
+
+        self.clock_image(hr, min_, sec_)
+        self.img = ImageTk.PhotoImage(file="clock_new.png")
+        self.lbl.config(image=self.img)
+        self.lbl.after(200, self.working)
         
     def main_graph(self):
         
@@ -329,9 +384,12 @@ class PageOne(tk.Frame):
         
     def in_da_bank(self):
         
-        Balance = tk.Label(self, text='Balance: ', font='Helvetica 15 bold', bg='white')
+        Balance = tk.Label(self, text='Balance: ', 
+                           font='Helvetica 15 bold', bg='white')
         Balance.place(x=350, y=150)
-        Balance_show = tk.Label(self, text=balance1, font='bold', bg='white', borderwidth=2, relief="solid", width = 10)
+        Balance_show = tk.Label(self, text=balance1, font='bold', 
+                                bg='white', borderwidth=2, relief="solid", 
+                                width = 10)
         Balance_show.place(x=450, y=150)
         
     def get_balance(self):
@@ -405,7 +463,7 @@ class PageTransactions(tk.Frame):
 
         logout = tk.Button(self, text="Logout", fg='white',
                            bd='5', bg='blue',
-                           command=lambda: self.controller.show_frame(StartPage))
+                           command=lambda: self.controller.show_frame('StartPage'))
         logout.place(x=650, y=60, height=60, width=200)
 
         confirm_btn = tk.Button(self, text='Add transaction', 
@@ -416,7 +474,7 @@ class PageTransactions(tk.Frame):
 
         return_btn = tk.Button(self, text='Cancel and return',
                                fg='white', bd='5', bg='blue',
-                               command=lambda: self.controller.show_frame(PageOne))
+                               command=lambda: self.controller.show_frame('PageOne'))
         return_btn.place(x=650, y=220, height=60, width=200,)
      
     
@@ -574,7 +632,7 @@ class PageEdit(tk.Frame):
         
         logout = tk.Button(self, text="Logout", fg='white',
                            bd='5', bg='blue',
-                           command=lambda: self.controller.show_frame(StartPage))
+                           command=lambda: self.controller.show_frame('StartPage'))
         logout.place(x=800, y=60, height=60, width=200)
 
         accept_btn = tk.Button(self, text='Accept changes', 
@@ -584,7 +642,7 @@ class PageEdit(tk.Frame):
 
         return_btn = tk.Button(self, text='Return',
                                fg='white', bd='5', bg='blue',
-                               command=lambda: self.controller.show_frame(PageOne))
+                               command=lambda: self.controller.show_frame('PageOne'))
         return_btn.place(x=800, y=220, height=60, width=200,)
         
         refresh_btn = tk.Button(self, text='View/Refresh',
@@ -713,7 +771,7 @@ class PageEdit(tk.Frame):
 
             
     def set_cell_values(self, event):
-        #column = ('From', 'To', 'Amount', 'Date', 'Income/Expenses', 'Comment')
+
         for item in my_tree.selection():
             item_text = my_tree.item(item, "values")
             column = my_tree.identify_column(event.x)
@@ -721,7 +779,7 @@ class PageEdit(tk.Frame):
         cn = int(str(column).replace('#', ''))
         rn = int(str(row).replace('I', ''))
         entryedit = tk.Text(frame3, width=10 + (2 - 1) * 16, height=1)
-        entryedit.place(x=16 + (2 - 1) * 130, y=6 + rn * 20)
+        entryedit.place(x=16 + (2 - 1) * 130, y=6 + 20)
         
         def saveedit():
             my_tree.set(item, column=column, value=entryedit.get(0.0, "end"))
@@ -730,7 +788,7 @@ class PageEdit(tk.Frame):
             self.save_new_data()
     
         okb = ttk.Button(frame3, text='OK', width=4, command=saveedit)
-        okb.place(x=90 + (2 - 1) * 242, y=2 + rn * 20)
+        okb.place(x=90 + (2 - 1) * 242, y=6 + 20)
         
     def save_new_data(self):
         
@@ -758,12 +816,12 @@ class Summary(tk.Frame):
 
         logout = tk.Button(self, text="Logout", fg='white',
                            bd='5', bg='blue',
-                           command=lambda: self.controller.show_frame(StartPage))
+                           command=lambda: self.controller.show_frame('StartPage'))
         logout.place(x=650, y=60, height=60, width=200)
         
         return_btn = tk.Button(self, text='Return',
                                fg='white', bd='5', bg='blue',
-                               command=lambda: self.controller.show_frame(PageOne))
+                               command=lambda: self.controller.show_frame('PageOne'))
         return_btn.place(x=650, y=240, height=60, width=200,)
         
         refresh_btn = tk.Button(self, text='Refresh',
@@ -784,13 +842,13 @@ class Summary(tk.Frame):
 
         dates = []
 
-        c.execute('SELECT DISTINCT strftime("%m-%Y", date) FROM Income')
+        c.execute('SELECT DISTINCT strftime("%m-%Y", date) FROM Income ORDER BY Date DESC')
         month_year = c.fetchall()
         for row in month_year:
                 dates.append(row[0])
 
-        self.month_Box = ttk.Combobox(self, font=14, width=30, textvariable=dates_get, state='readonly')
-        self.month_Box.place(x=300, y=50, height=30, width=80)
+        self.month_Box = ttk.Combobox(self, font=14, width=15, textvariable=dates_get, state='readonly')
+        self.month_Box.place(x=300, y=50, height=30)
         
         self.month_Box['values'] = dates
         self.month_Box.bind("<<ComboboxSelected>>", self.graph)
@@ -981,12 +1039,12 @@ class Setup(tk.Frame):
         
         logout = tk.Button(self, text="Logout", fg='white',
                            bd='5', bg='blue',
-                           command=lambda: self.controller.show_frame(StartPage))
+                           command=lambda: self.controller.show_frame('StartPage'))
         logout.place(x=650, y=60, height=60, width=200)
         
         return_btn = tk.Button(self, text='Return',
                                fg='white', bd='5', bg='blue',
-                               command=lambda: self.controller.show_frame(PageOne))
+                               command=lambda: self.controller.show_frame('PageOne'))
         return_btn.place(x=650, y=240, height=60, width=200,)
         
         accept_btn = tk.Button(self, text='Accept changes',
@@ -1043,7 +1101,7 @@ class Setup(tk.Frame):
         tk.Label(input_success_screen, text="Modification succesfull").pack()
 
         input_success_screen.after(500, 
-                                   lambda: self.controller.show_frame(PageOne))
+                                   lambda: self.controller.show_frame('PageOne'))
         
         input_success_screen.after(1500, input_success_screen.destroy)
 
