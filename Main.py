@@ -8,6 +8,8 @@ import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
+from tkinter.filedialog import asksaveasfile
+import webbrowser
 
 
 from datetime import *
@@ -31,22 +33,6 @@ class AmazingButler(tk.Tk):
         container.grid_rowconfigure(0, weight=1)
         container.grid_columnconfigure(0, weight=1)
 
-        menubar = tk.Menu(container)
-        filemenu = tk.Menu(menubar, tearoff=0)
-        menubar.add_cascade(label='File', menu=filemenu)
-        Editmenu = tk.Menu(menubar, tearoff=0)
-        menubar.add_cascade(label='Edit', menu=Editmenu)
-        Optionsmenu = tk.Menu(menubar, tearoff=0)
-        menubar.add_cascade(label='Options', menu=Optionsmenu)
-        Toolsmenu = tk.Menu(menubar, tearoff=0)
-        menubar.add_cascade(label='Tools', menu=Toolsmenu)
-        Windowmenu = tk.Menu(menubar, tearoff=0)
-        menubar.add_cascade(label='Window', menu=Windowmenu)
-        helpmenu = tk.Menu(menubar, tearoff=0)
-        menubar.add_cascade(label='Help', menu=helpmenu)
-
-        tk.Tk.config(self, menu=menubar)
-
         self.frames = {}
 
         for F in (StartPage, PageOne, PageTransactions, PageEdit, Summary):
@@ -59,7 +45,30 @@ class AmazingButler(tk.Tk):
 
         self.show_frame(StartPage)
         self.title("Amazing Butler App")
-        self.geometry("900x500")
+        self.geometry("1100x700")
+        
+        def save():
+            files = [('All Files', '*.*'), 
+             ('Python Files', '*.py'),
+             ('Text Document', '*.txt')]
+            file = asksaveasfile(filetypes = files, defaultextension = files)
+
+        menubar = tk.Menu(container)
+        filemenu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label='File', menu=filemenu)
+        filemenu.add_command(label='Save', command=save)
+        filemenu.add_command(label='LogOut', command=lambda: self.show_frame(StartPage))
+        filemenu.add_command(label='Exit', command=self.destroy)
+                
+        def OpenUrl():
+            url = 'http://www.google.com'
+            webbrowser.open_new(url)
+        
+        helpmenu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label='Help', menu=helpmenu)
+        helpmenu.add_command(label='Help', command =OpenUrl)
+
+        tk.Tk.config(self, menu=menubar)
 
     def show_frame(self, cont):
 
