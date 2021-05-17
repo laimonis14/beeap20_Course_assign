@@ -64,6 +64,20 @@ class transactions:
             
          conn.commit()
          conn.close()
+         
+    def data_for_edit_page(self, from_date, to_date):
+        
+         conn = sqlite3.connect('Users_data.db')
+         c = conn.cursor()
+         c.execute('SELECT EXISTS (SELECT * FROM Income WHERE date BETWEEN ? and ?)',
+                   (from_date, to_date,))
+         result = c.fetchone()[0]
+         if result == 1:
+             c.execute('SELECT * FROM Income WHERE date BETWEEN ? and ?',
+                   (from_date, to_date,))
+             results = c.fetchall()
+         else: 
+             return None
         
 
    

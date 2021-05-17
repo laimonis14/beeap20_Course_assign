@@ -592,10 +592,185 @@ class PageEdit(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller
 
+        self.choose_date()
+        self.display_data()
+
+        
         logout = tk.Button(self, text="Logout", fg='white',
                            bd='5', bg='blue',
                            command=lambda: self.controller.show_frame(StartPage))
-        logout.place(x=650, y=60, height=60, width=200)
+        logout.place(x=800, y=60, height=60, width=200)
+
+        accept_btn = tk.Button(self, text='Accept changes', 
+                                fg='white', bd='5', bg='blue',
+                                command=self.save_new_data)
+        accept_btn.place(x=800, y=140, height=60, width=200)
+
+        return_btn = tk.Button(self, text='Return',
+                               fg='white', bd='5', bg='blue',
+                               command=lambda: self.controller.show_frame(PageOne))
+        return_btn.place(x=800, y=220, height=60, width=200,)
+        
+        refresh_btn = tk.Button(self, text='View/Refresh',
+                               fg='white', bd='5', bg='blue',
+                               command=self.get_data)
+        refresh_btn.place(x=550, y=60, height=60, width=200,)
+        
+        export_btn = tk.Button(self, text='Export to CSV',
+                               fg='white', bd='5', bg='blue',
+                               command=self.save_csv)
+        export_btn.place(x=550, y=140, height=60, width=200,)
+        
+    def choose_date(self):
+        
+        global from_Box
+        global to_Box
+        
+        choose_date = tk.Label(self, text='Choose date: ', bg='white')
+        choose_date.place(x=20, y=20)
+        
+        from_date = tk.Label(self, text='From: ', bg='white')
+        from_date.place(x=20, y=60)
+        from_Box = DateEntry(self, font=14, width=10, bd='2', selectmode="day",
+                             date_pattern='dd.mm.y')
+        
+        from_Box.place(x=60, y=60, height=20)
+        
+        to_date = tk.Label(self, text='To: ', bg='white')
+        to_date.place(x=20, y=120)
+        to_Box = DateEntry(self, font=14, width=10, bd='2', selectmode="day",
+                           date_pattern='dd.mm.y')
+        to_Box.place(x=60, y=120, height=20)
+        
+    def display_data(self):
+        global select
+        global my_tree
+        global frame3
+        conn = sqlite3.connect('Users_data.db')
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+        get_column_names = c.execute('SELECT * FROM Income')
+        col_name=[i[0] for i in get_column_names.description]
+        
+        frame3 = tk.Frame(self)       # select of names
+        frame3.place(x=20, y=250)
+        my_tree = ttk.Treeview(frame3)
+        my_tree['columns'] = col_name
+        scroll = tk.Scrollbar(frame3, orient=tk.VERTICAL)
+        
+        
+        scroll.pack(side=tk.RIGHT, fill=tk.Y, expand=1)
+        conn = sqlite3.connect('Users_data.db')
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+        
+        get_column_names = c.execute('SELECT * FROM Income')
+        col_name=[i[0] for i in get_column_names.description]
+
+        my_tree = ttk.Treeview(frame3, yscrollcommand=scroll.set)
+        my_tree['columns'] = col_name
+        scroll.config(command=my_tree.yview)
+        #format column'
+        my_tree.column('#0', width=0, stretch=tk.NO)
+        my_tree.column(col_name[0], width=0, stretch=tk.NO)
+        my_tree.column(col_name[1], anchor=tk.W, width=120)
+        
+        my_tree.column(col_name[2], anchor=tk.W, width=80)
+        my_tree.column(col_name[3], anchor=tk.CENTER, width=120)
+        my_tree.column(col_name[4], anchor=tk.W, width=120)
+        my_tree.column(col_name[5], anchor=tk.W, width=120)
+        my_tree.column(col_name[6], anchor=tk.W, width=120)
+        
+        #cREATE HEADINGS
+        my_tree.heading('#0', text='', anchor=tk.W)
+        my_tree.heading(col_name[0], text='', anchor=tk.W)
+        my_tree.heading(col_name[1], text = 'From', anchor=tk.W)
+        
+        my_tree.heading(col_name[2], text='To', anchor=tk.CENTER)
+        my_tree.heading(col_name[3], text='Amount', anchor=tk.W)
+        my_tree.heading(col_name[4], text='Date', anchor=tk.W)
+        my_tree.heading(col_name[5], text='Income/Expenses', anchor=tk.W)
+        my_tree.heading(col_name[6], text='Comment', anchor=tk.W)
+        
+        my_tree.pack(side=tk.LEFT,  fill=tk.BOTH, expand=1)
+        
+        
+        my_tree.bind('<Double-1>', self.set_cell_values)
+        
+        
+        
+    def get_data(self):
+        
+        from_date=from_Box.get_date()
+        to_date = to_Box.get_date()
+
+        conn = sqlite3.connect('Users_data.db')
+        c = conn.cursor()
+
+        c.execute('SELECT * FROM Income WHERE date BETWEEN ? and ?',
+                   (from_date, to_date,))
+        results = c.fetchall()
+       
+        count = 0
+        if my_tree.exists(count)==True:
+            my_tree.delete(*my_tree.get_children())
+            for record in results:
+           
+                my_tree.insert('', index='end', iid=count, tex='', values=(record[0], record[1], record[2], record[3], record[4], record[5], record[6]))
+                count += 1
+        else:
+            for record in results:
+           
+                my_tree.insert('', index='end', iid=count, tex='', values=(record[0], record[1], record[2], record[3], record[4], record[5], record[6]))
+                count += 1
+       
+        conn.close()    
+        
+    def save_csv(self):
+        
+        
+        data = [my_tree.item (item) ['values'] for item in my_tree.get_children ()]
+        df = pd.DataFrame (data)
+        df.columns = ['Id', 'From', 'To', 'Amount', 'Date', 'Income/Expenses', 'Comment']
+        df.to_csv ('data.csv', encoding ='shift-jis', header = True, index = False)
+        
+
+            
+    def set_cell_values(self, event):
+        #column = ('From', 'To', 'Amount', 'Date', 'Income/Expenses', 'Comment')
+        for item in my_tree.selection():
+            item_text = my_tree.item(item, "values")
+            column = my_tree.identify_column(event.x)
+            row = my_tree.identify_row(event.y)
+        cn = int(str(column).replace('#', ''))
+        rn = int(str(row).replace('I', ''))
+        entryedit = tk.Text(frame3, width=10 + (2 - 1) * 16, height=1)
+        entryedit.place(x=16 + (2 - 1) * 130, y=6 + rn * 20)
+        
+        def saveedit():
+            my_tree.set(item, column=column, value=entryedit.get(0.0, "end"))
+            entryedit.destroy()
+            okb.destroy()
+            self.save_new_data()
+    
+        okb = ttk.Button(frame3, text='OK', width=4, command=saveedit)
+        okb.place(x=90 + (2 - 1) * 242, y=2 + rn * 20)
+        
+    def save_new_data(self):
+        
+        curItem = my_tree.focus()
+        print(curItem)
+        values = my_tree.item(curItem, 'values')
+        
+        print(values)
+        conn = sqlite3.connect('Users_data.db')
+        c = conn.cursor()
+
+        c.execute('UPDATE Income SET from_where = ?,  category= ?, Amount = ?, Date = ?, InEx = ?, comments = ? WHERE id = ?', 
+                  (values[1], values[2], values[3], values[4], values[5], values[6], values[0]))
+        
+        conn.commit()
+        conn.close()
 
 
 class Summary(tk.Frame):
