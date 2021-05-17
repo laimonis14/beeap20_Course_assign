@@ -35,7 +35,7 @@ class AmazingButler(tk.Tk):
 
         self.frames = {}
 
-        for F in (StartPage, PageOne, PageTransactions, PageEdit, Summary):
+        for F in (StartPage, PageOne, PageTransactions, PageEdit, Summary, Setup):
 
             frame = F(container, self)
             frame.configure(bg='white')
@@ -724,6 +724,84 @@ class Summary(tk.Frame):
 class Lotto():
     def roll_dice(self):
         dices.roll_dice(self)
+        
+
+class Setup(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+
+        self.controller = controller
+        self.targets()
+        self.target_val()
+        
+        
+        logout = tk.Button(self, text="Logout", fg='white',
+                           bd='5', bg='blue',
+                           command=lambda: self.controller.show_frame(StartPage))
+        logout.place(x=650, y=60, height=60, width=200)
+        
+        return_btn = tk.Button(self, text='Return',
+                               fg='white', bd='5', bg='blue',
+                               command=lambda: self.controller.show_frame(PageOne))
+        return_btn.place(x=650, y=240, height=60, width=200,)
+        
+        accept_btn = tk.Button(self, text='Accept changes',
+                               fg='white', bd='5', bg='blue',
+                               command=self.get_targets)
+        accept_btn.place(x=650, y=150, height=60, width=200,)
+        
+    def targets(self):
+        
+        transactions.target_table(self)
+        
+    def target_val(self):
+        global saving_tar
+        global spending_tar
+        global estim_tar
+        saving_tar = tk.IntVar()
+        spending_tar = tk.IntVar()
+        estim_tar = tk.IntVar()
+        
+        saving_label = tk.Label(self, text='Saving target', bg='white',
+                                justify='right', font='bold')
+        saving_label.place(x=40, y=100)
+        saving_tar_Box = tk.Entry(self, font=20, bd='2', textvariable=saving_tar)
+        saving_tar_Box.place(x=200, y=100, height=30, width=100) 
+        
+        spending_label = tk.Label(self, text='Spending target', bg='white',
+                                justify='right', font='bold')
+        spending_label.place(x=40, y=250)
+        spending_tar_Box = tk.Entry(self, font=20, bd='2', textvariable=spending_tar)
+        spending_tar_Box.place(x=200, y=250, height=30, width=100) 
+        
+        estim_label = tk.Label(self, text='Monthly \n estimated budget', bg='white',
+                                justify='center', font='bold')
+        estim_label.place(x=40, y=400)
+        estim_tar_Box = tk.Entry(self, font=20, bd='2', textvariable=estim_tar)
+        estim_tar_Box.place(x=200, y=400, height=30, width=100) 
+        
+    def get_targets(self):
+        
+        sav_val = saving_tar.get()
+        spen_val = spending_tar.get() 
+        estim_val = estim_tar.get()
+        
+        transactions.insert_target_table(self, sav_val, spen_val, estim_val)
+        self.input_aff()
+        
+        
+    def input_aff(self):
+        
+        global input_success_screen
+        input_success_screen = tk.Toplevel(self)
+        input_success_screen.title("Success")
+        input_success_screen.geometry("150x100")
+        tk.Label(input_success_screen, text="Modification succesfull").pack()
+
+        input_success_screen.after(500, 
+                                   lambda: self.controller.show_frame(PageOne))
+        
+        input_success_screen.after(1500, input_success_screen.destroy)
 
 
 app = AmazingButler()
