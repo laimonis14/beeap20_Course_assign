@@ -1,5 +1,5 @@
 import sqlite3
-import datetime
+from datetime import *
 import tkinter as tk
 
 
@@ -48,8 +48,7 @@ class transactions:
          c = conn.cursor()
          c.execute('SELECT strftime("%m",date) FROM Targets')
          date_result = c.fetchall()
-         print(date_result)
-         print(date.strftime('%m'))
+
          c.execute('SELECT EXISTS (SELECT Date FROM Targets WHERE strftime("%m",date) = ?)',
                    (date.strftime('%m'),))
          val = c.fetchone()[0]

@@ -11,14 +11,14 @@ from matplotlib.figure import Figure
 from tkinter.filedialog import asksaveasfile
 import webbrowser
 import numpy as np
-
+import csv
+import pandas as pd
 
 from datetime import *
 from tkcalendar import Calendar, DateEntry
 from PIL import Image, ImageTk, ImageDraw
 import requests, base64
 from WeatherFile import OpenWeatherMap, OWIconLabel
-from registration_file import registers
 from DB import transactions
 from dice import dices
 
@@ -46,7 +46,7 @@ class AmazingButler(tk.Tk):
 
         self.show_frame(StartPage)
         self.title("Amazing Butler App")
-        self.geometry("1100x700")
+        self.geometry("1100x750")
         
         def save():
             files = [('All Files', '*.*'), 
@@ -185,76 +185,54 @@ class StartPage(tk.Frame):
 
     def Login(self):
 
-        global username_verify
+
         global password_verify
 
-        username_verify = tk.StringVar()
+
         password_verify = tk.StringVar()
         # Login button
         Login_button = tk.Button(self,
                                  text='Login', command=self.login_verify,
                                  height=3, width=13, fg='white',
                                  bd='5', bg='blue')
-        Login_button.place(x=400, y=350)
-        # Register button
-        Register_button = tk.Button(self, text="Register",
-                                    command=self.register,
-                                    fg='white', bd='5', bg='blue',
-                                    width=13, height=3)
-        Register_button.place(x=540, y=350)
-        # Username label
-        self.user_lbl = tk.Label(self, text='Username', bg='white')
-        self.user_lbl.place(x=350, y=250)
+        Login_button.place(x=500, y=350)
+
         # Password label
         self.password_lbl = tk.Label(self, text='Password', bg='white')
         self.password_lbl.place(x=350, y=280)
 
-        global box1
         global box2
-        # Username insert box
-        box1 = tk.Entry(self, textvariable=username_verify)
-        box1.place(x=480, y=250)
+
         # Password insert box
         box2 = tk.Entry(self, textvariable=password_verify, show="*")
         box2.place(x=480, y=280)
 
-    def register(self):
-
-        registers.register(self)
-
-    def register_user(self):
-
-        registers.submit(self)
-
     def login_verify(self):
 
-        # If Username entry box is empty shows message
-        if len(box1.get()) == 0:
-            tk.messagebox.showinfo("ERROR", "Username Not Defined")
+
             # If Password entry box is empty shows message
-        elif len(box2.get()) == 0:
+        if len(box2.get()) == 0:
             tk.messagebox.showinfo("ERROR", "Password Not Defined")
 
         else:
-            username1 = username_verify.get()
+
             password1 = password_verify.get()
             # Open data base
             with sqlite3.connect("Users_data.db") as db:
                 cursor = db.cursor()
             # Select variables what need
-            find_user = ('SELECT *, oid FROM users_data WHERE user_name = ? AND password = ?')
+            find_user = ('SELECT *, oid FROM users_data WHERE password = ?')
             # what values need to search in data base
-            cursor.execute(find_user, [(username1), (password1)])
+            cursor.execute(find_user, [(password1)])
             results = cursor.fetchall()
 
             if results:
                 for i in results:
-                    box1.delete(0, tk.END)
                     box2.delete(0, tk.END)
                     self.login_sucess()
                     break
             else:
-                tk.messagebox.showinfo("ERROR", "Wrong Username or Password")
+                tk.messagebox.showinfo("ERROR", "Wrong Password")
 
         db.close()
 
@@ -271,9 +249,6 @@ class StartPage(tk.Frame):
                                    lambda: self.controller.show_frame(PageOne))
         # closes pop up window after 1,5s
         login_success_screen.after(1500, login_success_screen.destroy)
-        if login_success_screen.showinfo('Success', 'Login Success'):
-            lambda: self.controller.show_frame(PageOne)
-            login_success_screen.destroy()
 
 
 class PageOne(tk.Frame):
@@ -304,10 +279,10 @@ class PageOne(tk.Frame):
         editaccount = tk.Button(self, text="Edit account",
                                 fg='white', bd='5', bg='blue',
                                 command=lambda: self.controller.show_frame(PageEdit))
-
         editaccount.place(x=800, y=300, height=60, width=200)
 
-        setup = tk.Button(self, text="Setup", fg='white', bd='5', bg='blue')
+        setup = tk.Button(self, text="Setup", fg='white', bd='5', bg='blue',
+                          command=lambda: self.controller.show_frame(Setup))
         setup.place(x=800, y=400, height=60, width=200)
 
         Accountsum = tk.Button(self, text="Account summary",
@@ -347,6 +322,7 @@ class PageOne(tk.Frame):
         a1.plot(estim_val, estim_dates, label='Estimated budget')
         a1.legend(bbox_to_anchor=(0, 1.02, 1, .102), loc=3,
              ncol=2, borderaxespad=0) 
+        a1.set_xticklabels(estim_val, rotation=45, ha='right')
         canvas1 = FigureCanvasTkAgg(f1, Main_Canvas)
        
         canvas1.get_tk_widget().pack()
@@ -759,10 +735,10 @@ class PageEdit(tk.Frame):
     def save_new_data(self):
         
         curItem = my_tree.focus()
-        print(curItem)
+
         values = my_tree.item(curItem, 'values')
         
-        print(values)
+
         conn = sqlite3.connect('Users_data.db')
         c = conn.cursor()
 
@@ -821,12 +797,20 @@ class Summary(tk.Frame):
             
         month_lbl = tk.Label(self, text='Select Date: ', bg='white', font='bold')
         month_lbl.place(x=170, y=50)
-       
-        c.execute('SELECT SUM (Amount) FROM Income WHERE InEx = "Expenses"')
+
+    def graph(self, event=None):
+        
+        conn = sqlite3.connect('Users_data.db')
+        c = conn.cursor()
+        
+        c.execute('SELECT SUM (Amount) FROM Income WHERE InEx = "Expenses" AND strftime("%m-%Y",date) = ?',
+                  (dates_get.get(),))
         expense = c.fetchall()
-        c.execute('SELECT SUM (Amount) FROM Income WHERE InEx = "Income"')
+        c.execute('SELECT SUM (Amount) FROM Income WHERE InEx = "Income" AND strftime("%m-%Y",date) = ?',
+                  (dates_get.get(),))
         income = c.fetchall()
-        c.execute('SELECT SUM (Amount) FROM Income WHERE InEx = "Expenses" AND category = "Savings"')
+        c.execute('SELECT SUM (Amount) FROM Income WHERE InEx = "Expenses" AND category = "Savings" AND strftime("%m-%Y",date) = ?',
+                 (dates_get.get(),))
         savings = c.fetchall()
         
         Money_in = tk.Label(self, text='Money in', font='bold', bg='white')
@@ -843,12 +827,9 @@ class Summary(tk.Frame):
         Savings.place(x=650, y=500)
         Savings_show = tk.Label(self, text=savings, font='bold', bg='white', borderwidth=2, relief="solid", width = 10)
         Savings_show.place(x=750, y=500)
-           
         conn.commit()
         conn.close()
-  
-    def graph(self, event=None):
-
+        
         to_graph = dates_get.get()
         
       
