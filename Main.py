@@ -10,6 +10,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 from matplotlib.figure import Figure
 from tkinter.filedialog import asksaveasfile
 import webbrowser
+import numpy as np
 
 
 from datetime import *
@@ -84,7 +85,8 @@ class StartPage(tk.Frame):
         self.controller = controller
         self.lbl = tk.Label(self, bg="white")
         self.lbl.place(x=10, y=10, height=200, width=200)
-
+        transactions.target_table(self)
+        transactions.create_table(self)
         self.working()
         self.calendar()
         self.weather()
@@ -280,6 +282,7 @@ class PageOne(tk.Frame):
         tk.Frame.__init__(self, parent)
 
         self.controller = controller
+        self.load_graph()
 
         StartPage.weather(self)
         StartPage.calendar(self)
@@ -316,11 +319,95 @@ class PageOne(tk.Frame):
                               fg='white', bd='5', bg='blue',
                               command=self.lot)
         playlotto.place(x=800, y=600, height=60, width=200)
+        
+        refresh = tk.Button(self, text="Refresh",
+                              fg='white', bd='5', bg='blue',
+                              command=self.load_graph)
+        refresh.place(x=650, y=180, height=20, width=50)
+        
+    def load_graph(self):
+        self.graph_val()
+        self.main_graph()
+        self.get_balance()
+        self.in_da_bank()
 
     def lot(self):
         Lotto.roll_dice(self)
+        
+    def main_graph(self):
+        
+        Main_Canvas = tk.Canvas(self, width=305, height=150)
+        Main_Canvas.place(x=280, y=200)
+        
+        
+        f1 = Figure(figsize=(5,5), dpi=100)
+        a1 = f1.add_subplot(111)
+        a1.plot(sav_val, sav_dates, label='Saving Target')
+        a1.plot(spen_val, spen_dates, label='Spending target')
+        a1.plot(estim_val, estim_dates, label='Estimated budget')
+        a1.legend(bbox_to_anchor=(0, 1.02, 1, .102), loc=3,
+             ncol=2, borderaxespad=0) 
+        canvas1 = FigureCanvasTkAgg(f1, Main_Canvas)
+       
+        canvas1.get_tk_widget().pack()
+        
+    def in_da_bank(self):
+        
+        Balance = tk.Label(self, text='Balance: ', font='Helvetica 15 bold', bg='white')
+        Balance.place(x=350, y=150)
+        Balance_show = tk.Label(self, text=balance1, font='bold', bg='white', borderwidth=2, relief="solid", width = 10)
+        Balance_show.place(x=450, y=150)
+        
+    def get_balance(self):
+        global balance1
+        
+        conn = sqlite3.connect('Users_data.db')
+        c = conn.cursor()
+        c.execute('SELECT SUM(Amount) FROM Income WHERE InEx = "Income"')
+        incomes = c.fetchall()
+        
+        c.execute('SELECT SUM(Amount) FROM Income WHERE InEx = "Expenses"')  
+        expenses = c.fetchall()
+        
+        a = np.float_(incomes)
+        b = np.float_(expenses)
+        balance = a-b
+        balance1 = str(balance).lstrip('[').rstrip(']')
+        
+    def graph_val(self):
+        global sav_val
+        global sav_dates
+        global spen_val
+        global spen_dates
+        global estim_val
+        global estim_dates
+        
+        conn = sqlite3.connect('Users_data.db')
+        c = conn.cursor()
+        sav_dates = []
+        sav_val = []
 
+        c.execute('SELECT Saving, strftime("%m-%Y", Date) FROM Targets ORDER BY Date ASC')
+        for row in c.fetchall():
+            sav_dates.append(row[0])
+            sav_val.append(row[1])
 
+        spen_dates = []
+        spen_val = []
+        c.execute('SELECT Spending, strftime("%m-%Y", Date) FROM Targets ORDER BY Date ASC')
+        for row in c.fetchall():
+            spen_dates.append(row[0])
+            spen_val.append(row[1])
+
+            
+        estim_dates = []
+        estim_val = []
+        c.execute('SELECT Estimated, strftime("%m-%Y", Date) FROM Targets ORDER BY Date ASC')
+        for row in c.fetchall():
+            estim_dates.append(row[0])
+            estim_val.append(row[1])
+
+ 
 class PageTransactions(tk.Frame):
 
     def __init__(self, parent, controller):
@@ -733,6 +820,7 @@ class Setup(tk.Frame):
         self.controller = controller
         self.targets()
         self.target_val()
+
         
         
         logout = tk.Button(self, text="Logout", fg='white',
