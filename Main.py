@@ -80,7 +80,7 @@ class AmazingButler(tk.Tk):
 
         importmenu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label='Import', menu=importmenu)
-        importmenu.add_command(label='Open CSV', command =import_csv)
+        importmenu.add_command(label='Load CSV', command =import_csv)
 
         tk.Tk.config(self, menu=menubar)
 
@@ -343,6 +343,7 @@ class PageOne(tk.Frame):
         self.get_savings
         self.savings_total
         
+        
 
     def lot(self):
         Lotto.roll_dice(self)
@@ -419,17 +420,15 @@ class PageOne(tk.Frame):
         global savings1
         conn = sqlite3.connect('Users_data.db')
         c = conn.cursor()
-        c.execute('SELECT SUM (Amount) FROM Income WHERE InEx = "Income" AND category = "Savings"')
+        
+        c.execute('SELECT SUM (Amount) FROM Income WHERE InEx = "Income" AND from_where = "Savings"')
         savings_in = c.fetchall()
-        if savings_in == [(None,)]:
-            savings_in = '0'
-            print(savings_in)
-        else:
-            savings_in
+        
+
         
         c.execute('SELECT SUM(Amount) FROM Income WHERE category = "Savings" AND InEx = "Expenses"')  
         savings_out = c.fetchall()
-        print(savings_out)
+
         
         a1 = np.float_(savings_in)
         b1 = np.float_(savings_out)
@@ -644,7 +643,23 @@ class PageTransactions(tk.Frame):
 
         
         conn.commit()
-        conn.close() 
+        conn.close()
+        
+        self.input_aff()
+        
+    def input_aff(self):
+        
+        global add_app_screen
+        add_app_screen = tk.Toplevel(self)
+        add_app_screen.title("Success")
+        add_app_screen.geometry("150x100")
+        tk.Label(add_app_screen, text="Adding succesfull").pack()
+
+        add_app_screen.after(500, 
+                                   lambda: self.controller.show_frame('PageOne'))
+        
+        add_app_screen.after(1500, add_app_screen.destroy)
+        
     
     def clock_image(self, hr, min_, sec_):
         clock = Image.new("RGB", (400, 400), (255, 255, 255))
@@ -706,7 +721,7 @@ class PageEdit(tk.Frame):
 
         accept_btn = tk.Button(self, text='Accept changes', 
                                 fg='white', bd='5', bg='blue',
-                                command=self.save_new_data)
+                                command=self.edit_aff)
         accept_btn.place(x=800, y=140, height=60, width=200)
 
         return_btn = tk.Button(self, text='Return',
@@ -874,7 +889,19 @@ class PageEdit(tk.Frame):
         
         conn.commit()
         conn.close()
+        
 
+    def edit_aff(self):
+        
+        global edit_screen
+        edit_screen = tk.Toplevel(self)
+        edit_screen.title("Success")
+        edit_screen.geometry("150x100")
+        tk.Label(edit_screen, text="Modification succesfull").pack()
+
+        edit_screen.after(500, lambda: self.controller.show_frame('PageOne'))
+        
+        edit_screen.after(1500, edit_screen.destroy)
 
 class Summary(tk.Frame):
     def __init__(self, parent, controller):
