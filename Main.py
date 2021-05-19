@@ -13,6 +13,7 @@ import webbrowser
 import numpy as np
 import csv
 import pandas as pd
+from tkinter import filedialog as fd
 
 from datetime import *
 from tkcalendar import Calendar, DateEntry
@@ -21,6 +22,7 @@ import requests, base64
 from WeatherFile import OpenWeatherMap, OWIconLabel
 from DB import transactions
 from dice import dices
+from password import password
 
 
 class AmazingButler(tk.Tk):
@@ -48,7 +50,7 @@ class AmazingButler(tk.Tk):
 
         self.show_frame('StartPage')
         self.title("Amazing Butler App")
-        #self.geometry("1100x750")
+        #self.resizable(width=False, height=False)
         
         def save():
             files = [('All Files', '*.*'), 
@@ -71,6 +73,14 @@ class AmazingButler(tk.Tk):
         helpmenu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label='Help', menu=helpmenu)
         helpmenu.add_command(label='Help', command =OpenUrl)
+        
+        def import_csv():
+            
+            transactions.import_csv(self)
+
+        importmenu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label='Import', menu=importmenu)
+        importmenu.add_command(label='Open CSV', command =import_csv)
 
         tk.Tk.config(self, menu=menubar)
 
@@ -270,6 +280,8 @@ class PageOne(tk.Frame):
         tk.Frame.__init__(self, parent)
 
         self.controller = controller
+        self.get_savings()
+        self.savings_total()
         self.load_graph()
         self.lbl = tk.Label(self, bg="white")
         self.lbl.place(x=10, y=10, height=200, width=200)
@@ -277,8 +289,14 @@ class PageOne(tk.Frame):
         StartPage.weather(self)
         StartPage.calendar(self)
         self.button()
+        
 
     def button(self):
+        
+        change_passw = tk.Button(self, text="Change password",
+                           fg='white', bd='5', bg='blue',
+                           command=self.change_password)
+        change_passw.place(x=800, y=30, height=30, width=200)
 
         logout = tk.Button(self, text="Logout",
                            fg='white', bd='5', bg='blue',
@@ -315,11 +333,15 @@ class PageOne(tk.Frame):
                               command=self.load_graph)
         refresh.place(x=650, y=180, height=20, width=50)
         
+        
+        
     def load_graph(self):
         self.graph_val()
         self.main_graph()
         self.get_balance()
         self.in_da_bank()
+        self.get_savings
+        self.savings_total
         
 
     def lot(self):
@@ -382,6 +404,38 @@ class PageOne(tk.Frame):
        
         canvas1.get_tk_widget().pack()
         
+    def savings_total(self):
+        
+        Savings = tk.Label(self, text='Total savings: ', 
+                           font='Helvetica 12 bold', bg='white')
+        Savings.place(x=10, y=550)
+        Savings_show = tk.Label(self, text=savings1, font='bold', 
+                                bg='white', borderwidth=2, relief="solid", 
+                                width = 10)
+        Savings_show.place(x=130, y=550)
+        
+    def get_savings(self):
+        
+        global savings1
+        conn = sqlite3.connect('Users_data.db')
+        c = conn.cursor()
+        c.execute('SELECT SUM (Amount) FROM Income WHERE InEx = "Income" AND category = "Savings"')
+        savings_in = c.fetchall()
+        if savings_in == [(None,)]:
+            savings_in = '0'
+            print(savings_in)
+        else:
+            savings_in
+        
+        c.execute('SELECT SUM(Amount) FROM Income WHERE category = "Savings" AND InEx = "Expenses"')  
+        savings_out = c.fetchall()
+        print(savings_out)
+        
+        a1 = np.float_(savings_in)
+        b1 = np.float_(savings_out)
+        savings = b1 - a1
+        savings1 = str(savings).lstrip('[').rstrip(']')
+        
     def in_da_bank(self):
         
         Balance = tk.Label(self, text='Balance: ', 
@@ -399,6 +453,7 @@ class PageOne(tk.Frame):
         c = conn.cursor()
         c.execute('SELECT SUM(Amount) FROM Income WHERE InEx = "Income"')
         incomes = c.fetchall()
+
         
         c.execute('SELECT SUM(Amount) FROM Income WHERE InEx = "Expenses"')  
         expenses = c.fetchall()
@@ -411,10 +466,13 @@ class PageOne(tk.Frame):
     def graph_val(self):
         global sav_val
         global sav_dates
+        global saving_dates
+        global saving_val
         global spen_val
         global spen_dates
         global estim_val
         global estim_dates
+       
         
         conn = sqlite3.connect('Users_data.db')
         c = conn.cursor()
@@ -425,6 +483,7 @@ class PageOne(tk.Frame):
         for row in c.fetchall():
             sav_dates.append(row[0])
             sav_val.append(row[1])
+  
 
         spen_dates = []
         spen_val = []
@@ -440,7 +499,17 @@ class PageOne(tk.Frame):
         for row in c.fetchall():
             estim_dates.append(row[0])
             estim_val.append(row[1])
+            
+    def change_password(self):
+        
+        password.change_password(self)
 
+   
+    def approve(self):
+        password.ch_passw(self)
+
+    def saved_pass(self):
+        password.saved(self) 
  
 class PageTransactions(tk.Frame):
 

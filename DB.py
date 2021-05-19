@@ -1,6 +1,9 @@
 import sqlite3
 from datetime import *
 import tkinter as tk
+from tkinter import filedialog as fd
+import pandas as pd
+import csv
 
 
 class transactions:
@@ -77,6 +80,33 @@ class transactions:
              results = c.fetchall()
          else: 
              return None
+         
+            
+    def import_csv(self):
+        
+         conn = sqlite3.connect('Users_data.db')
+         c = conn.cursor()
+         c.execute("""CREATE TABLE IF NOT EXISTS Income(
+                
+               id INTEGER PRIMARY KEY,
+               from_where text NOT NULL,
+               category text NO NULL,
+               Amount real NOT NULL,
+               date INTEGER NOT NULL,
+               InEx text NOT NULL,
+               comments text
+               
+              
+                )""")
+           
+
+         filePath = fd.askopenfilename(initialdir='.')
+         df = pd.read_csv(filePath)
+         df.columns = ['id', 'from_where', 'category', 'Amount', 'date', 'InEx', 'comments']
+         df.to_sql('Income', conn, if_exists='append', index=False)
+
+         conn.commit()
+         conn.close
         
 
    
